@@ -8,5 +8,5 @@
     "tsBuildInfoFile": null
   },
   "include": ["src/core", "src/server"],
-  "exclude": ["**/*.test.ts"]
+  "exclude": ["**/*.test.ts", "src/core/teste"]
 }
