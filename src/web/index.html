@@ -4,6 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Biblioteca de Prompts</title>
+    <script>
+      // Aplica o tema antes do primeiro paint (mesma regra de tema.ts).
+      (function () {
+        var escuro = false;
+        try {
+          var p = localStorage.getItem('prompt-library:tema');
+          escuro =
+            p === 'escuro' ||
+            (p !== 'claro' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        } catch (e) {}
+        document.documentElement.dataset.tema = escuro ? 'escuro' : 'claro';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,0 +1,129 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where([data-tema=escuro], [data-tema=escuro] *));
+
+/* Tokens (decisão 27): terracota e creme no claro, cinzas quentes no escuro. */
+:root {
+  color-scheme: light;
+  --fundo: #faf9f5;
+  --superficie: #f5f4ee;
+  --elevada: #ffffff;
+  --realce: #efede4;
+  --borda: #e3e0d6;
+  --borda-forte: #cfcbbf;
+  --texto: #1f1e1d;
+  --texto-suave: #6b6a65;
+  --terracota: #c96442;
+  /* Terracota escurecida para texto e fundo de botão (contraste AA com branco e com o creme). */
+  --destaque: #b05535;
+  --destaque-hover: #9c4a2e;
+  --sobre-destaque: #ffffff;
+  --perigo: #b42318;
+  --perigo-fundo: #fdecea;
+  --sucesso: #2f6f3e;
+  --diff-rem-fundo: #fbe4df;
+  --diff-rem-forte: #f3c1b6;
+  --diff-add-fundo: #e2f0dd;
+  --diff-add-forte: #bfdeb3;
+  --sombra: 0 8px 30px rgb(31 30 29 / 0.12);
+  --fonte-mono:
+    ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+[data-tema='escuro'] {
+  color-scheme: dark;
+  --fundo: #262624;
+  --superficie: #1f1e1d;
+  --elevada: #30302e;
+  --realce: #393834;
+  --borda: #3e3d39;
+  --borda-forte: #55534d;
+  --texto: #f5f4ee;
+  --texto-suave: #a6a39a;
+  --terracota: #d97757;
+  --destaque: #d97757;
+  --destaque-hover: #e38a6c;
+  --sobre-destaque: #1f1e1d;
+  --perigo: #f08a7e;
+  --perigo-fundo: #3d2321;
+  --sucesso: #8fc79b;
+  --diff-rem-fundo: #42261f;
+  --diff-rem-forte: #6b3528;
+  --diff-add-fundo: #233826;
+  --diff-add-forte: #345a39;
+  --sombra: 0 8px 30px rgb(0 0 0 / 0.45);
+}
+
+@theme inline {
+  --color-fundo: var(--fundo);
+  --color-superficie: var(--superficie);
+  --color-elevada: var(--elevada);
+  --color-realce: var(--realce);
+  --color-borda: var(--borda);
+  --color-borda-forte: var(--borda-forte);
+  --color-texto: var(--texto);
+  --color-suave: var(--texto-suave);
+  --color-terracota: var(--terracota);
+  --color-destaque: var(--destaque);
+  --color-destaque-hover: var(--destaque-hover);
+  --color-sobre-destaque: var(--sobre-destaque);
+  --color-perigo: var(--perigo);
+  --color-perigo-fundo: var(--perigo-fundo);
+  --color-sucesso: var(--sucesso);
+  --color-diff-rem: var(--diff-rem-fundo);
+  --color-diff-rem-forte: var(--diff-rem-forte);
+  --color-diff-add: var(--diff-add-fundo);
+  --color-diff-add-forte: var(--diff-add-forte);
+  --shadow-flutuante: var(--sombra);
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, ui-serif, serif;
+  --font-mono: var(--fonte-mono);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--terracota);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--terracota) 30%, transparent);
+  }
+  dialog::backdrop {
+    background: rgb(20 20 19 / 0.45);
+  }
+}
+
+@layer components {
+  .botao {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-borda bg-elevada px-3 py-1.5 text-sm font-medium text-texto transition-colors hover:bg-realce disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .botao-primario {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-destaque px-3 py-1.5 text-sm font-semibold text-sobre-destaque transition-colors hover:bg-destaque-hover disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .botao-perigo {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-perigo px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:opacity-90 dark:text-superficie;
+  }
+  .botao-icone {
+    @apply inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-suave transition-colors hover:bg-realce hover:text-texto disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .campo {
+    @apply w-full rounded-lg border border-borda bg-elevada px-3 py-1.5 text-sm text-texto placeholder:text-suave focus:border-terracota focus:outline-none;
+  }
+}
+
+/* Paleta (cmdk) */
+[cmdk-item][data-selected='true'] {
+  background: var(--realce);
+}

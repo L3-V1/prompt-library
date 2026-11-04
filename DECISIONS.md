@@ -264,3 +264,45 @@ Registro cronológico das decisões tomadas no projeto. Seções mais recentes n
 72. **Validação com `zod` (dependência direta, também usada no M5) e `@hono/zod-validator`, com as mensagens do locale `pt-BR` do zod.**
 
 73. **`normalizar` (minúsculas, sem acentos) foi para o núcleo (`src/core/texto.ts`), compartilhada pela busca do servidor e pela similaridade do `/save`.**
+
+## 2026-11-04: M4, interface base
+
+### Decisões
+
+74. **Os tipos da API chegam ao navegador pelo cliente `hc<AppType>` do Hono, importado com `import type` de `src/server/app.ts`; o `tsconfig.web.json` referencia o `tsconfig.node.json`, e o `typecheck` passou de `tsc -b --noEmit` para `tsc -b`.**
+    - O `--noEmit` com referência entre projetos falha (TS6310: projeto referenciado não pode desligar a emissão). O `tsc -b` emite em `dist/.tsc/`, fora do git.
+    - O tipo do Prompt no navegador é o inferido pelo `hc` (`InferResponseType`), não o `Prompt` do núcleo, porque o JSON torna `origem` `?: … | undefined`, que o `exactOptionalPropertyTypes` não aceita como `Prompt`. `Change`, `Versao`, `Mudancas`, `CorpoConflito` e afins vêm do núcleo e do servidor como `import type`; nada de código de Node entra no bundle.
+    - `pedir(res)` devolve o JSON, lança `ConflitoApi { atual, diff }` no 409 de conflito e `ErroApi { status, codigo }` com a mensagem pt-BR do servidor nos outros erros.
+
+75. **Os módulos de dados do navegador ficam em `src/web/dados/`, não em `src/web/api/`.**
+    - Por quê: no dev, o proxy `/api` do Vite capturava os próprios módulos (`/api/consultas.ts` dava 404).
+
+76. **Estilo com Tailwind v4 (`@tailwindcss/vite`): os tokens do tema são variáveis CSS em `:root`, trocadas por `[data-tema="escuro"]` e expostas ao Tailwind com `@theme inline`; a variante `dark` segue `data-tema`.** A preferência (`sistema | claro | escuro`) fica no `localStorage`; em `sistema`, um `matchMedia` resolve o tema. Um script inline no `index.html` aplica o tema antes do primeiro paint.
+    - O terracota de marca (`#C96442`/`#D97757`) fica em ícones, foco e realces; texto e fundo de botão no claro usam `#B05535`, que tem contraste AA com branco e com o creme.
+
+77. **Dados do servidor com TanStack Query, `staleTime: Infinity` e sem refetch por foco: quem invalida é o SSE.** O evento `acervo` invalida `prompts`, `colecoes` e `tags`, e `prompt`, `versoes` e `diff` de cada id alterado ou removido; `diretrizes` invalida `['diretrizes']`. Ao reconectar o `EventSource`, tudo é invalidado e o editor aberto confere o próprio Prompt.
+
+78. **O estado de navegação fica na URL (`?colecao=&tag=&favoritos=1&q=&p=<id>` e `?vista=diretrizes`), com `pushState`/`popstate` e sem router.** `colecao=` vazio é "Sem coleção". A busca usa `replaceState`, para não encher o histórico.
+
+79. **O editor é o CodeMirror 6 com wrapper próprio: o `EditorView` é criado por documento e o conteúdo trocado por fora entra como transação.** `basicSetup`, Markdown com `language-data` para os blocos de código, quebra de linha, tema e realce ligados aos tokens CSS, e `Mod-s` salvando.
+
+80. **O editor aberto guarda `{ base, rascunho }` e reage às versões do Prompt vindas do servidor (SSE, Favorito, Coleção) por hash e conteúdo: hash igual à base é ignorado; conteúdo igual ao rascunho ou à base troca só a base (é o próprio salvar, ou só Favorito e Coleção mudaram); sem pendências, recarrega com o aviso "Atualizado fora do app"; com pendências, mostra a faixa "Este Prompt mudou no disco".**
+    - Depois de Favorito e Coleção (decisão 51) a base é trocada pelo Prompt devolvido (o `rebasear`), senão o Ctrl+S seguinte daria 409 falso. A comparação de conteúdo também cobre o evento SSE que chega antes da resposta do próprio `PUT`.
+    - Salvar manda só os campos alterados; sem alterações, não chama a API. Se o rascunho não mudou durante o pedido, adota o título e as Tags normalizados pelo servidor.
+    - As Diretrizes seguem a mesma regra, por hash.
+
+81. **O conflito (decisão 10) abre um modal com Recarregar, Sobrescrever (repete o pedido com o hash do disco) e Ver diferenças (o seu texto à esquerda, o do disco à direita).** Quando só título ou Tags diferem, o diff vem vazio e o modal mostra os metadados lado a lado. A faixa de mudança externa usa o mesmo modal, com o diff calculado no navegador.
+
+82. **Sair com pendências (trocar de Prompt, abrir Diretrizes ou "Novo Prompt", voltar no navegador) passa por "Descartar alterações?" com Salvar, Descartar e Continuar editando; fechar a aba usa `beforeunload`.** No `popstate`, a URL anterior é reposta antes de perguntar.
+
+83. **Copiar (botão e paleta) usa o texto salvo, por `GET /api/prompts/:id/copia`; com pendências, o aviso diz "Copiado o texto salvo; há alterações não salvas".**
+
+84. **A paleta Ctrl+K é o `cmdk` dentro de um `<dialog>`, com `shouldFilter={false}` e os resultados da busca do servidor (a mesma ordem da lista); sem busca, os Favoritos vêm primeiro. Enter copia e fecha; Ctrl+Enter abre o Prompt.** O atalho é ouvido em captura, para funcionar com o foco no CodeMirror. A seleção é controlada e volta ao primeiro item quando a lista muda, porque o `cmdk` não reescolhe sozinho com a lista vinda de fora.
+
+85. **O diff lado a lado é montado no navegador a partir do `Change[]` do servidor: remoções e adições consecutivas são emparelhadas linha a linha, e a última linha sem `\n` é marcada.** Nas Versões, a esquerda é sempre a mais antiga: "comparar com atual" é Versão → atual, e "com a Versão anterior" é anterior → escolhida.
+
+86. **Restaurar uma Versão fica bloqueado enquanto há alterações não salvas ("salve ou descarte antes"); o 409 abre o mesmo modal de conflito.**
+
+87. **Diálogos são o `<dialog>` nativo com `showModal()` (foco preso, Esc, backdrop), e o foco inicial vem de `data-autofocus`, aplicado depois do `showModal`.**
+    - Por quê: o `autoFocus` do React roda antes do `showModal` do efeito e se perde.
+    - Descartadas: bibliotecas de diálogo (Radix, Headless UI).
