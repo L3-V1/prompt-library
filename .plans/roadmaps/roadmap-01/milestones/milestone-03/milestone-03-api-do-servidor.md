@@ -1,11 +1,13 @@
 ---
 titulo: "M3: API do servidor"
 data: 2026-11-04
-status: aprovado
+status: implementado
 tipo: milestone
 numero: "03"
 pai: roadmaps/roadmap-01
 triagem: ok
+branch: feat/milestone-03-api-do-servidor
+encerrado_em: 2026-11-04
 ---
 
 # M3: API do servidor (`src/server/`)
@@ -112,3 +114,14 @@ O M1 entregou o núcleo (`src/core/`, `criarAcervo`: listar, ler, criar, salvar 
    - o mesmo pela porta 5173 (proxy do Vite);
    - `curl -H 'Host: evil.com' ...` → 403; `curl <ip-da-rede>:5174` → conexão recusada.
 3. Commit na branch `feat/milestone-03-api-do-servidor` só quando você pedir.
+
+## Encerramento das pendências
+
+Decidido em 2026-11-04, no encerramento da etapa.
+
+| Pendência | Origem | Destino | Motivo |
+|---|---|---|---|
+| Interface (M4) | Fora do escopo | Próxima etapa | É o M4 do roadmap, a etapa seguinte, que consome esta API |
+| Análise e `.analises/` (M5) | Fora do escopo | Próxima etapa | Já planejada no roadmap como M5 |
+| `npm start` como serviço (M6) | Fora do escopo | Próxima etapa | Já prevista no M6 (Acabamento) do roadmap |
+| Versões das Diretrizes | Fora do escopo | Descartar | Fora do roadmap; o `baseHash` evita perda e o histórico fica com o git do vault |
