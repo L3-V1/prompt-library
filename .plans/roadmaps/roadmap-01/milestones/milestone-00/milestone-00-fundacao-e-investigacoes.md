@@ -1,7 +1,9 @@
 ---
 titulo: "M0: Fundação e investigações (roadmap-01)"
 data: 2026-11-04
-status: aprovado
+status: implementado
+branch: feat/milestone-00-fundacao-e-investigacoes
+encerrado_em: 2026-11-04
 tipo: milestone
 numero: "00"
 pai: roadmaps/roadmap-01
@@ -69,3 +71,11 @@ O `prompt-library` hoje só tem documentação (`DECISIONS.md` com 39 decisões,
 - `curl` no IP da LAN na porta 5174 deve falhar.
 - `DECISIONS.md` com as decisões 40 a 43 e a seção "Em aberto" atualizada.
 - Commit inicial (somente quando você pedir).
+
+## Encerramento das pendências
+
+Decidido em 2026-11-04, no encerramento da etapa.
+
+| Pendência | Origem | Destino | Motivo |
+|---|---|---|---|
+| Investigação 1: texto colado no transcript (decisão 40) | Passo 3 | Próxima etapa | Precisa de um paste real do usuário; o M2 (/save) é o primeiro marco que depende dela |
