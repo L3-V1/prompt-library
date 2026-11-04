@@ -25,3 +25,5 @@ features, fixes, refactors, spikes, docs, chores
     - **milestones/**
       - **milestone-00/**
         - [M0: Fundação e investigações (roadmap-01)](roadmaps/roadmap-01/milestones/milestone-00/milestone-00-fundacao-e-investigacoes.md)
+      - **milestone-01/**
+        - [M1: Núcleo de armazenamento (roadmap-01)](roadmaps/roadmap-01/milestones/milestone-01/milestone-01-nucleo-de-armazenamento.md)
