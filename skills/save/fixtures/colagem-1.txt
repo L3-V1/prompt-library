@@ -1,0 +1,12 @@
+linha 1 do texto colado
+linha 2: conteúdo com acentuação e `código`
+linha 3: conteúdo com acentuação e `código`
+linha 4: conteúdo com acentuação e `código`
+linha 5: conteúdo com acentuação e `código`
+linha 6: conteúdo com acentuação e `código`
+linha 7: conteúdo com acentuação e `código`
+linha 8: conteúdo com acentuação e `código`
+linha 9: conteúdo com acentuação e `código`
+linha 10: conteúdo com acentuação e `código`
+linha 11: conteúdo com acentuação e `código`
+linha 12: conteúdo com acentuação e `código`
