@@ -9,6 +9,7 @@ describe('resolverPastas', () => {
       prompts: '/tmp/v/Prompts',
       versoes: '/tmp/v/Prompts/.versoes',
       lixeira: '/tmp/v/.trash',
+      diretrizes: '/tmp/v/Prompts/_Diretrizes.md',
     });
   });
 

@@ -65,4 +65,12 @@ export interface Pastas {
   prompts: string;
   versoes: string;
   lixeira: string;
+  /** `Prompts/_Diretrizes.md` (decisão 5). */
+  diretrizes: string;
+}
+
+/** Estado das Diretrizes no disco; `hash` é `null` quando o arquivo não existe. */
+export interface EstadoDiretrizes {
+  conteudo: string;
+  hash: string | null;
 }

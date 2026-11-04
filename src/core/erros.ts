@@ -1,4 +1,4 @@
-import type { Prompt } from './tipos.js';
+import type { EstadoDiretrizes, Prompt } from './tipos.js';
 
 /** O arquivo mudou no disco desde a leitura em que a edição se baseou (decisões 9 e 10). */
 export class ConflitoError extends Error {
@@ -55,4 +55,12 @@ export class ColecaoNaoEncontradaError extends Error {
 /** Frontmatter com YAML inválido ou que não é um mapa. */
 export class FrontmatterInvalidoError extends Error {
   override name = 'FrontmatterInvalidoError';
+}
+
+/** `_Diretrizes.md` mudou no disco desde a leitura em que a edição se baseou. */
+export class DiretrizesConflitoError extends Error {
+  override name = 'DiretrizesConflitoError';
+  constructor(readonly atual: EstadoDiretrizes) {
+    super('As Diretrizes foram alteradas fora do app desde a última leitura.');
+  }
 }

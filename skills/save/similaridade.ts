@@ -1,4 +1,6 @@
-import type { Prompt } from '../../src/core/index.js';
+import { normalizar, type Prompt } from '../../src/core/index.js';
+
+export { normalizar };
 
 export interface Parecido {
   id: string;
@@ -9,11 +11,6 @@ export interface Parecido {
   pontuacao: number;
   /** O corpo do Prompt é igual ao texto (ignorando quebras de linha no fim). */
   identico: boolean;
-}
-
-/** Minúsculas e sem acentos. */
-export function normalizar(texto: string): string {
-  return texto.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
 }
 
 /** Conjunto das palavras (letras e dígitos) com 2 ou mais caracteres. */
