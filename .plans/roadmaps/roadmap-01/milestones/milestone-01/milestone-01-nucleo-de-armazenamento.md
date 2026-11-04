@@ -1,12 +1,13 @@
 ---
 titulo: "M1: Núcleo de armazenamento (roadmap-01)"
 data: 2026-11-04
-status: aprovado
+status: implementado
 tipo: milestone
 numero: "01"
 pai: roadmaps/roadmap-01
 triagem: ok
 branch: feat/milestone-01-nucleo-de-armazenamento
+encerrado_em: 2026-11-04
 ---
 
 # M1: Núcleo de armazenamento (`src/core/`)
@@ -114,3 +115,12 @@ corpo literal
 2. Teste manual com um vault temporário (`PROMPT_LIBRARY_VAULT=$(mktemp -d)`) via um script `tsx` descartável no scratchpad: `echo` de um `.md` sem `id` em `Prompts/Teste/`, rodar `listar()` e conferir que só o frontmatter ganhou `id`; `salvar` com `baseHash` antigo depois de editar o arquivo com `echo` → `ConflitoError`; conferir os arquivos em `.versoes/<id>/` e um `excluir` indo para `.trash/`.
 3. Nada é gravado no vault real durante o M1.
 4. Commit na branch `feat/milestone-01-nucleo-de-armazenamento` só quando você pedir.
+
+## Encerramento das pendências
+
+Decidido em 2026-11-04, no encerramento da etapa.
+
+| Pendência | Origem | Destino | Motivo |
+|---|---|---|---|
+| Índice em memória, watcher e SSE; `_Diretrizes.md`; leitura de transcripts e similaridade | Fora do escopo | Próxima etapa | Já estão no escopo do M2 e do M3 no roadmap |
+| Investigação 1 (texto colado no transcript, decisão 40) | Fora do escopo | Próxima etapa | É pré-requisito do M2 |
