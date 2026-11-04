@@ -232,3 +232,35 @@ Registro cronológico das decisões tomadas no projeto. Seções mais recentes n
     - Por quê: a skill não grava texto incompleto. Se o transcript já trouxer o texto integral, não há marcador e nada é trocado.
 
 62. **A instalação é `npm run save:install`, que cria o link `~/.claude/skills/save` → `<repo>/skills/save` (respeitando `CLAUDE_CONFIG_DIR`). Se o link já aponta para o repositório, não faz nada; se existe outra coisa no lugar, falha sem tocar nela.**
+
+## 2026-11-04: M3, API do servidor
+
+### Decisões
+
+63. **A API REST fica sob `/api` (Hono, `127.0.0.1:5174`): `prompts` (listar, ler, criar, salvar, Coleção, Favorito, excluir, `copia`), `prompts/:id/versoes` (listar, ler, `diff`, `restaurar`), `colecoes`, `tags`, `diretrizes` e `eventos`.** `criarApp(deps)` monta o app sem rede (testes com `app.request()`) e exporta `AppType` para o cliente `hc` do M4; `main.ts` só monta as dependências, liga o watcher e chama `serve`.
+
+64. **Todo erro responde `{ erro, codigo }` em pt-BR, por um único `app.onError`.** 404 para Prompt, Versão, Coleção ou rota inexistentes; 400 para validação (`codigo: 'validacao'`), JSON malformado e Coleção inválida; 409 para Coleção repetida e conflito; 415 para escrita sem JSON; 403 para Host ou Origin recusados; 500 com log no console para o resto.
+
+65. **O 409 de conflito traz `atual` (o Prompt, ou `{ conteudo, hash }` das Diretrizes, como está no disco) e `diff = diffLines(texto enviado, texto no disco)`.** Para Prompts, o texto é o corpo; sem corpo no pedido (só título ou Tags, ou `restaurar`), o diff vem vazio.
+    - Por quê: dá à interface o que a decisão 10 pede (recarregar, sobrescrever ou ver o diff) sem outra ida ao servidor.
+
+66. **O índice em memória é relido inteiro a cada mudança (o acervo é pequeno), com single-flight: uma releitura por vez, e os pedidos feitos durante ela compartilham uma única rodada seguinte.** As mudanças são calculadas por id, comparando hash e caminho: `{ criados, alterados, removidos }`. Só emite evento se algo mudou (Prompts, conjunto de Coleções ou problemas).
+    - As rotas de escrita chamam o acervo e depois `await indice.atualizar()`, então a resposta e a leitura seguinte já veem o novo estado e a releitura disparada pelo watcher não gera evento repetido.
+    - As leituras (`GET`) vêm do índice; a escrita sempre confere o hash no disco, então um índice atrasado nunca sobrescreve uma edição externa.
+    - Descartadas: atualização incremental por arquivo.
+
+67. **O watcher é o `chokidar` sobre `Prompts/`, ignorando qualquer segmento que comece com `.` (`.versoes`, `.analises`, temporários do `gravarAtomico`), com `awaitWriteFinish` de 100 ms e debounce de 150 ms antes de reler.** Reage a `.md` e a pastas; `_Diretrizes.md` gera o evento `diretrizes` (só quando o hash muda). Na partida, cria `Prompts/` se faltar.
+
+68. **Eventos por SSE em `GET /api/eventos`: `acervo` (`{ criados, alterados, removidos }`), `diretrizes` (`{ hash }`) e `ping` (na conexão e a cada 30 s).** O M4 invalida as queries a partir deles e detecta quando o Prompt aberto mudou fora.
+    - Descartada: WebSocket (só há tráfego do servidor para o navegador).
+
+69. **A listagem devolve Resumos (Prompt sem `corpo`); a cópia é `GET /api/prompts/:id/copia` em `text/plain` com o corpo verbatim (decisão 25).** A busca normaliza caixa e acentos, exige todos os termos em título, Tags ou corpo e ordena por pontuação (título 3, Tag 2, corpo 1 por termo), depois Favoritos e título; sem `q`, por título. O filtro `colecao=` vazio é "Sem coleção"; o filtro de Tag ignora caixa e acentos.
+
+70. **Diretrizes têm `baseHash` (`null` = o arquivo não existia) e não têm Versões.** Arquivo ausente vale `{ conteudo: '', hash: null }`.
+
+71. **Proteção do loopback, além da decisão 23: o `Host` precisa ser `127.0.0.1` ou `localhost` nas portas 5173 ou 5174 (barra DNS rebinding); `POST`, `PUT` e `PATCH` exigem `Content-Type: application/json` (e `DELETE` também, se tiver corpo), e, se houver `Origin`, ela precisa ser uma dessas origens (barra CSRF de outra página aberta no navegador).**
+    - Por quê: o M5 vai executar o `claude` a partir desta API.
+
+72. **Validação com `zod` (dependência direta, também usada no M5) e `@hono/zod-validator`, com as mensagens do locale `pt-BR` do zod.**
+
+73. **`normalizar` (minúsculas, sem acentos) foi para o núcleo (`src/core/texto.ts`), compartilhada pela busca do servidor e pela similaridade do `/save`.**
