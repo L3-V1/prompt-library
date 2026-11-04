@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Wrapper da skill /save: a skill é instalada por symlink, então resolve o caminho real
+# antes de achar o repositório e o tsx dele.
+set -euo pipefail
+dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+repo="$(cd "$dir/../.." && pwd)"
+tsx="$repo/node_modules/.bin/tsx"
+if [[ ! -x "$tsx" ]]; then
+  printf '{ "erro": "tsx não encontrado; rode npm install em %s" }\n' "$repo"
+  exit 1
+fi
+exec "$tsx" --tsconfig "$repo/tsconfig.node.json" "$dir/capture.ts" "$@"
