@@ -1,12 +1,13 @@
 ---
 titulo: "M4: Interface base"
 data: 2026-11-04
-status: aprovado
+status: implementado
 tipo: milestone
 numero: "04"
 pai: roadmaps/roadmap-01
 triagem: ok
 branch: feat/milestone-04-interface-base
+encerrado_em: 2026-11-04
 ---
 
 # M4: Interface base (`src/web/`)
@@ -178,3 +179,14 @@ O mesmo modal serve às Diretrizes.
    - excluir → confirmação, e o arquivo vai para `<tmp>/.trash/`.
 3. `npm run build && npm start` → a interface em `http://127.0.0.1:5174` funciona igual, com o SSE ativo.
 4. Commit na branch `feat/milestone-04-interface-base` só quando você pedir.
+
+## Encerramento das pendências
+
+Decidido em 2026-11-04, no encerramento da etapa.
+
+| Pendência | Origem | Destino | Motivo |
+|---|---|---|---|
+| Análise e painel lateral da Análise | Fora do escopo | Próxima etapa | É o M5 do roadmap, a etapa seguinte |
+| `npm start` como serviço, README e revisão com `ui-ux-kit:ui-guidelines` | Fora do escopo | Próxima etapa | Já planejados no M6 (Acabamento), depois do M5 |
+| Variáveis `{{...}}` | Fora do escopo | Plano avulso | Pós-MVP pela decisão 28, fora dos marcos do roadmap |
+| Arrastar Prompt entre Coleções, excluir Coleção e redimensionar painéis | Fora do escopo | Plano avulso | Nenhum marco os cobre; excluir Coleção exige API nova |
