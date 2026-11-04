@@ -31,3 +31,5 @@ features, fixes, refactors, spikes, docs, chores
         - [M2: Skill /save (Captura) (roadmap-01)](roadmaps/roadmap-01/milestones/milestone-02/milestone-02-skill-save-captura.md)
       - **milestone-03/**
         - [M3: API do servidor](roadmaps/roadmap-01/milestones/milestone-03/milestone-03-api-do-servidor.md)
+      - **milestone-04/**
+        - [M4: Interface base](roadmaps/roadmap-01/milestones/milestone-04/milestone-04-interface-base.md)
