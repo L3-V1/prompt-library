@@ -147,7 +147,7 @@ Registro cronológico das decisões tomadas no projeto. Seções mais recentes n
 
 ### Em aberto
 
-- Verificar se o transcript da sessão guarda na íntegra os textos grandes colados (que aparecem na tela como `[Pasted text #N]`); a fidelidade da Captura depende disso.
+- Verificar se o transcript da sessão guarda na íntegra os textos grandes colados (que aparecem na tela como `[Pasted text #N]`); a fidelidade da Captura depende disso. O `/save` do M2 funciona nos dois cenários (decisão 61); falta a observação real para registrar a decisão 40.
 - Variáveis em Prompts foram adiadas para depois do MVP.
 
 ## 2026-11-04: M0, fundação e investigações
@@ -202,3 +202,33 @@ Registro cronológico das decisões tomadas no projeto. Seções mais recentes n
     - Descartada: `gray-matter`, que re-serializa via js-yaml e perde a formatação.
 
 54. **A raiz do vault vem de `PROMPT_LIBRARY_VAULT`, com padrão `/home/levi/Documentos/vault`.** Os testes usam vaults temporários.
+
+## 2026-11-04: M2, skill /save
+
+### Decisões
+
+55. **A skill chama um wrapper bash `skills/save/capture`, que resolve o caminho real com `readlink -f` (a skill é um symlink) e faz `exec` do `tsx` do repositório em `capture.ts`, com `--tsconfig` do próprio repositório.**
+    - O CLI tem os subcomandos `extract`, `context` e `write`, sempre com JSON no stdout; erros saem como `{ "erro": "..." }` e código 1.
+    - Por quê: reaproveita o núcleo em TypeScript sem passo de build; o `--tsconfig` evita que o `tsconfig.json` do projeto aberto interfira.
+    - Descartadas: compilar a skill para JS; duplicar a gravação num script independente.
+
+56. **O texto capturado fica numa Captura temporária em `<tmpdir>/prompt-library-capturas/<id>.json` (modo 0600), entre o `extract` e o `write`. O `extract` devolve só uma prévia de 500 caracteres; a Captura é apagada depois do `write` e as abandonadas somem depois de 24 h.**
+    - Por quê: o texto completo nunca passa pelo Claude nem por argumentos de linha de comando (decisões 32 e 34).
+
+57. **Mensagem digitada é a linha `type: "user"` do transcript que não é `isMeta`, `isSidechain` nem `isCompactSummary`, não tem `origin.kind` diferente de `human`, não contém `tool_result` e não começa com `<command-name>`, `<command-message>`, `<local-command-*>`, `<bash-*>`, `<task-notification>` nem `[Request interrupted by user`.** O texto é o `content` string ou a junção (com `\n`) dos blocos `text`, sem os blocos injetados pela IDE (`<ide_…>`) e `<system-reminder>`; os blocos `image` só são contados. Linhas inválidas e `uuid` repetido são ignorados.
+    - O transcript é `projects/<slug>/<CLAUDE_CODE_SESSION_ID>.jsonl` (procurado em todas as pastas de `projects/` se não estiver na do cwd); sem o id de sessão, usa o `.jsonl` mais recente da pasta do cwd.
+    - `origin.kind: "human"` não está em todas as linhas digitadas, então não serve de critério único.
+
+58. **Prompt parecido é o que tem Jaccard de palavras (minúsculas, sem acentos, 2+ caracteres) de pelo menos 0,4 com o texto; o `context` devolve até 3, do mais para o menos parecido. Corpo igual ao texto (ignorando quebras de linha no fim) é `identico` e faz o `/save` parar sem gravar.** A skill recomenda "nova Versão" a partir de 0,7.
+    - Descartadas: similaridade por embeddings ou pelo Claude; distância de edição.
+
+59. **A Origem grava o cwd absoluto da mensagem em `projeto`, a data ISO da mensagem e o id da sessão.**
+    - Por quê: permite voltar à conversa com `cd <projeto> && claude -r <sessao>`.
+
+60. **A nova Versão por Captura (`write --versao-de`) troca só o corpo; título, Tags, Favorito, Coleção e Origem do Prompt existente ficam. Usa o hash guardado no `context` e, se o arquivo mudou depois disso, falha com "o Prompt mudou desde a análise; rode o /save de novo".**
+    - `--versao-de` só aceita um dos parecidos daquela Captura e não aceita `--titulo`, `--colecao` nem `--tag`.
+
+61. **Marcadores `[Pasted text #N …]` no texto são trocados pelo conteúdo colado, lido da entrada de `history.jsonl` com o mesmo `display` (da mesma sessão; na falta, do mesmo projeto; a de timestamp mais próximo): `pastedContents[N].content` ou `paste-cache/<contentHash>.txt`. Marcador sem conteúdo encontrado aborta a Captura.**
+    - Por quê: a skill não grava texto incompleto. Se o transcript já trouxer o texto integral, não há marcador e nada é trocado.
+
+62. **A instalação é `npm run save:install`, que cria o link `~/.claude/skills/save` → `<repo>/skills/save` (respeitando `CLAUDE_CONFIG_DIR`). Se o link já aponta para o repositório, não faz nada; se existe outra coisa no lugar, falha sem tocar nela.**
