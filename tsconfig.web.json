@@ -9,5 +9,6 @@
     "outDir": "dist/.tsc/web",
     "tsBuildInfoFile": "dist/.tsc/web.tsbuildinfo"
   },
-  "include": ["src/web"]
+  "include": ["src/web"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }
