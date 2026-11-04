@@ -167,3 +167,38 @@ Registro cronológico das decisões tomadas no projeto. Seções mais recentes n
 43. **No git do vault, `Prompts/.versoes/` é versionado e `Prompts/.analises/` vai para o `.gitignore`.**
     - Por quê: as Versões são histórico do usuário e entram nos commits manuais (sem conflito com o ADR 0003, que só exclui commits automáticos); as Análises em andamento são estado temporário.
     - A aplicação no vault fica para o M6.
+
+## 2026-11-04: M1, núcleo de armazenamento
+
+### Decisões
+
+44. **Identificadores do código em pt-BR sem acento (`titulo`, `colecao`, `listar()`, `ConflitoError`).**
+    - Por quê: acompanham a linguagem do domínio (GLOSSARY.md) e as chaves do frontmatter.
+
+45. **O nome do arquivo acompanha o título: criar usa o título como nome, mudar o título no app renomeia o `.md` e mover de Coleção também usa o título. Sem `titulo` no frontmatter, o título é o nome do arquivo.**
+    - O nome passa por `nomeSeguro`: remove `/ \ : * ? " < > | # ^ [ ]` e os prefixos `.` e `_` (que deixariam o arquivo oculto ou fora da varredura), limita a 120 caracteres e usa "Sem título" se ficar vazio. Em colisão, sufixo " 2", " 3"…
+    - Descartadas: nome de arquivo pelo id; nome fixo na criação.
+
+46. **Coleção tem um nível só: é a subpasta direta de `Prompts/`; `.md` em níveis mais fundos pertencem à Coleção do primeiro nível.** Pastas com prefixo `_` ou `.` não são Coleções e são ignoradas pela varredura.
+    - Descartadas: Coleções aninhadas.
+
+47. **Frontmatter com chaves em pt-BR: `id`, `titulo`, `tags`, `favorito` e `origem` (`projeto`, `data`, `sessao`). `tags` ausente vale `[]` e `favorito` ausente vale `false`.**
+    - O corpo é tudo depois do `---` de fechamento e é preservado byte a byte, assim como BOM e `\r\n`. Campos desconhecidos, comentários e ordem são preservados (lib `yaml`, API `Document`).
+    - Arquivo sem frontmatter é Prompt. Frontmatter com YAML inválido (ou que não é um mapa) torna o arquivo um problema da listagem, nunca regravado.
+    - `id` fora do formato `[A-Za-z0-9_-]{1,64}` é tratado como ausente e substituído, porque vira nome de pasta em `.versoes/`.
+
+48. **Id duplicado (arquivo copiado no Obsidian): o arquivo com `mtime` mais antigo mantém o id; os outros recebem id novo.**
+
+49. **Versão é o snapshot verbatim do `.md` em `Prompts/.versoes/<id>/<AAAAMMDDTHHmmssSSSZ>-<motivo>.md`, com data e motivo só no nome do arquivo.** Motivos: `criacao`, `manual`, `analise`, `captura`, `restauracao`. Em colisão de milissegundo, o carimbo avança.
+    - Descartadas: arquivo auxiliar de metadados; guardar só o corpo.
+
+50. **No primeiro save de um Prompt sem Versões (vindo do Obsidian), o estado atual do disco é registrado antes como Versão `criacao`, para o diff ter base.** Um save que não muda nada não cria Versão.
+
+51. **`favoritar` e `mover` não criam Versão nem exigem `baseHash`: são mudanças de organização, não de conteúdo.**
+
+52. **`restaurar` aplica `titulo`, `tags` e `corpo` da Versão por meio de `salvar` (motivo `restauracao`), mantendo Favorito, Coleção e campos desconhecidos atuais.** Por isso cria uma nova Versão e respeita o conflito.
+
+53. **Dependências do núcleo: `yaml` (frontmatter), `diff` (`diffLines` das Versões) e `nanoid` (id de 12 caracteres `[0-9a-z]`).**
+    - Descartada: `gray-matter`, que re-serializa via js-yaml e perde a formatação.
+
+54. **A raiz do vault vem de `PROMPT_LIBRARY_VAULT`, com padrão `/home/levi/Documentos/vault`.** Os testes usam vaults temporários.
