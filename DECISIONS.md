@@ -433,4 +433,13 @@ Registro cronológico das decisões tomadas no projeto. Seções mais recentes n
 ### Em aberto
 
 - Confirmar que `--output-format stream-json` funciona junto com `--json-schema` e devolve a saída estruturada no evento final, antes de planejar o `stream-json`.
-- O limite de tempo que o comando `prompt-library` espera o serviço responder.
+
+## 2026-11-05: roadmap-02, M0, comando `prompt-library`
+
+### Decisões
+
+120. **O comando `prompt-library` espera o serviço por até 10 s, consultando `GET /api/health` a cada 250 ms, cada consulta com 1 s de timeout.** Resolve o item em aberto do limite de tempo (decisão 109).
+     - Por quê: o servidor sobe em bem menos que isso; 10 s cobre uma máquina lenta logo após o login sem deixar o usuário esperando muito quando algo deu errado.
+
+121. **O symlink `~/.local/bin/prompt-library` é "nosso" quando aponta para um `scripts/prompt-library.mjs` (deste ou de outro clone); um link nosso com outro alvo é refeito. Um conflito no `servico:instalar` só avisa e não faz o comando falhar, porque o serviço já foi instalado.** Detalha a decisão 110.
+     - Descartado: falhar o `servico:instalar` inteiro quando o symlink está ocupado.
