@@ -1,7 +1,9 @@
 ---
 titulo: "roadmap-02, M1: Coleções (arrastar e excluir)"
 data: 2026-11-05
-status: aprovado
+status: implementado
+branch: feat/milestone-01-colecoes
+encerrado_em: 2026-11-05
 tipo: milestone
 numero: "01"
 pai: roadmaps/roadmap-02
