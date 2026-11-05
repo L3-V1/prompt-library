@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { CABECALHO, gerarUnidade, montarPath, unidadeNossa } from './servico-unidade.mjs';
+import {
+  CABECALHO,
+  caminhoUnidade,
+  gerarUnidade,
+  montarPath,
+  unidadeNossa,
+} from './servico-unidade.mjs';
 
 const base = {
   repo: '/home/u/prompt-library',
@@ -65,5 +71,22 @@ describe('unidadeNossa', () => {
   it('reconhece só o cabeçalho gerado aqui', () => {
     expect(unidadeNossa(gerarUnidade(base))).toBe(true);
     expect(unidadeNossa('[Unit]\nDescription=outra coisa\n')).toBe(false);
+  });
+});
+
+describe('caminhoUnidade', () => {
+  it('sem XDG_CONFIG_HOME: ~/.config/systemd/user', () => {
+    expect(caminhoUnidade({ xdgConfigHome: undefined, home: '/home/u' })).toBe(
+      '/home/u/.config/systemd/user/prompt-library.service',
+    );
+    expect(caminhoUnidade({ xdgConfigHome: '', home: '/home/u' })).toBe(
+      '/home/u/.config/systemd/user/prompt-library.service',
+    );
+  });
+
+  it('com XDG_CONFIG_HOME', () => {
+    expect(caminhoUnidade({ xdgConfigHome: '/tmp/cfg', home: '/home/u' })).toBe(
+      '/tmp/cfg/systemd/user/prompt-library.service',
+    );
   });
 });
