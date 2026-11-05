@@ -64,3 +64,35 @@ export class DiretrizesConflitoError extends Error {
     super('As Diretrizes foram alteradas fora do app desde a última leitura.');
   }
 }
+
+/** O Prompt não tem Análise em andamento. */
+export class AnaliseNaoEncontradaError extends Error {
+  override name = 'AnaliseNaoEncontradaError';
+  constructor(readonly promptId: string) {
+    super('Este Prompt não tem Análise em andamento.');
+  }
+}
+
+/** `.analises/<id>.json` existe mas não pôde ser lido; nunca é sobrescrito. */
+export class AnaliseInvalidaError extends Error {
+  override name = 'AnaliseInvalidaError';
+  constructor(
+    readonly promptId: string,
+    detalhe: string,
+  ) {
+    super(
+      `O arquivo da Análise (.analises/${promptId}.json) está ilegível: ${detalhe}. Descarte a Análise ou corrija o arquivo.`,
+    );
+  }
+}
+
+/** A Sugestão não existe ou não está num status que permite a ação. */
+export class SugestaoIndisponivelError extends Error {
+  override name = 'SugestaoIndisponivelError';
+  constructor(
+    readonly sugestaoId: string,
+    motivo: string,
+  ) {
+    super(motivo);
+  }
+}

@@ -67,10 +67,69 @@ export interface Pastas {
   lixeira: string;
   /** `Prompts/_Diretrizes.md` (decisão 5). */
   diretrizes: string;
+  /** `Prompts/.analises/`: uma Análise em andamento por Prompt, em `<id>.json`. */
+  analises: string;
 }
 
 /** Estado das Diretrizes no disco; `hash` é `null` quando o arquivo não existe. */
 export interface EstadoDiretrizes {
   conteudo: string;
   hash: string | null;
+}
+
+// --- Análise (M5) ---
+
+/** `aceita` e `rejeitada` são decisões gravadas; `pendente` e `desatualizada` saem do Rascunho. */
+export type StatusSugestao = 'pendente' | 'aceita' | 'rejeitada' | 'desatualizada';
+
+export interface Sugestao {
+  id: string;
+  justificativa: string;
+  /** Trecho do Rascunho a trocar, copiado literalmente; nunca vazio. */
+  trechoOriginal: string;
+  trechoNovo: string;
+  status: StatusSugestao;
+  /** Pista de offset do trecho no Rascunho; `null` quando desatualizada. */
+  inicio: number | null;
+}
+
+/** O que o Claude devolve para cada Sugestão. */
+export interface SugestaoGerada {
+  justificativa: string;
+  trechoOriginal: string;
+  trechoNovo: string;
+}
+
+export type ModeloClaude = 'opus' | 'sonnet' | 'haiku';
+
+export interface ExecucaoAnalise {
+  tipo: 'analise' | 'sugestao';
+  sugestaoId?: string;
+  iniciadaEm: string;
+}
+
+export interface UltimaExecucao {
+  custoUsd: number;
+  duracaoMs: number;
+  modelo: string;
+  /** Sugestões geradas e descartadas por não terem o trecho no Rascunho. */
+  descartadas: number;
+}
+
+/** Aprimoramento assistido de um Prompt, persistido em `Prompts/.analises/<promptId>.json`. */
+export interface Analise {
+  promptId: string;
+  /** Hash do Prompt quando a Análise começou. */
+  baseHash: string;
+  corpoOriginal: string;
+  rascunho: string;
+  instrucao: string;
+  /** `null` = padrão do Claude Code (decisão 21). */
+  modelo: ModeloClaude | null;
+  sugestoes: Sugestao[];
+  execucao: ExecucaoAnalise | null;
+  erro: string | null;
+  ultimaExecucao?: UltimaExecucao;
+  criadaEm: string;
+  atualizadaEm: string;
 }
