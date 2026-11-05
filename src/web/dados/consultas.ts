@@ -31,6 +31,7 @@ export const chaves = {
   versoes: (id: string) => ['versoes', id] as const,
   diff: (id: string, versaoId: string, para: string) => ['diff', id, versaoId, para] as const,
   diretrizes: ['diretrizes'] as const,
+  analise: (id: string) => ['analise', id] as const,
 } satisfies Record<string, QueryKey | ((...args: never[]) => QueryKey)>;
 
 export const clienteConsultas = new QueryClient({
@@ -136,7 +137,7 @@ export async function copiarPrompt(id: string): Promise<void> {
 // --- Escritas ---
 // Cada escrita atualiza o cache do próprio Prompt; o resto é invalidado pelo evento SSE.
 
-function guardar(prompt: Prompt): Prompt {
+export function guardar(prompt: Prompt): Prompt {
   clienteConsultas.setQueryData(chaves.prompt(prompt.id), prompt);
   return prompt;
 }
