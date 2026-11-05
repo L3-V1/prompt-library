@@ -1,8 +1,9 @@
 import { Command } from 'cmdk';
 import { useEffect, useState } from 'react';
 
+import { pedirCopia } from '../copia';
 import { mensagemDeErro, type Resumo } from '../dados/cliente';
-import { copiarPrompt, usePrompts } from '../dados/consultas';
+import { usePrompts } from '../dados/consultas';
 import { abrirPrompt } from '../navegacao';
 import { SEM_COLECAO, TECLA_MOD } from '../textos';
 import { Dialogo } from './Dialogo';
@@ -61,8 +62,11 @@ function Conteudo({ onFechar }: { onFechar: () => void }) {
   async function copiar(p: Resumo) {
     onFechar();
     try {
-      await copiarPrompt(p.id);
-      toast.sucesso(`Copiado: ${p.titulo}`);
+      await pedirCopia({
+        id: p.id,
+        titulo: p.titulo,
+        aoCopiar: () => toast.sucesso(`Copiado: ${p.titulo}`),
+      });
     } catch (erro) {
       toast.erro(`Não foi possível copiar: ${mensagemDeErro(erro)}`);
     }

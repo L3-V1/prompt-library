@@ -2,10 +2,10 @@ import { diffLines } from 'diff';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { localizar } from '../../core/analise/regras';
+import { pedirCopia } from '../copia';
 import { concluirAnalise, useAnalise, type Sugestao } from '../dados/analise';
 import { ConflitoApi, ErroApi, mensagemDeErro, type Prompt } from '../dados/cliente';
 import {
-  copiarPrompt,
   excluirPrompt,
   favoritarPrompt,
   filtrosDe,
@@ -288,12 +288,17 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
 
   async function copiar() {
     try {
-      await copiarPrompt(id);
-      if (pendente(estadoRef.current)) {
-        toast.info('Copiado o texto salvo; há alterações não salvas');
-      } else {
-        toast.sucesso('Copiado');
-      }
+      await pedirCopia({
+        id,
+        titulo: base.titulo,
+        aoCopiar: () => {
+          if (pendente(estadoRef.current)) {
+            toast.info('Copiado o texto salvo; há alterações não salvas');
+          } else {
+            toast.sucesso('Copiado');
+          }
+        },
+      });
     } catch (erro) {
       toast.erro(`Não foi possível copiar: ${mensagemDeErro(erro)}`);
     }

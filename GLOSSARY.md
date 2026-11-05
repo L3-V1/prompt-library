@@ -22,6 +22,10 @@ _Evitar_: Etiqueta, label
 Prompt marcado pelo usuário para aparecer em destaque.
 _Evitar_: Fixado, estrela
 
+**Variável**:
+Trecho `{{nome}}` no corpo de um Prompt que o usuário preenche ao copiá-lo. Um campo deixado vazio mantém o `{{nome}}` no texto copiado.
+_Evitar_: Placeholder, campo, parâmetro
+
 **Versão**:
 O estado completo de um Prompt num dado momento, registrado a cada alteração e passível de comparação e restauração.
 _Evitar_: Revisão, snapshot

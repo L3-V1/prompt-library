@@ -21,6 +21,8 @@ describe('montarPrompt', () => {
     expect(t).toMatch(/copiado literalmente/);
     expect(t).toMatch(/não podem se sobrepor/);
     expect(t).toMatch(/Não mude o idioma/);
+    expect(t).toMatch(/`\{\{nome\}\}` são Variáveis/);
+    expect(t).toMatch(/preserve-as exatamente/);
     expect(t).not.toMatch(/regenerar esta Sugestão/);
   });
 

@@ -38,6 +38,10 @@
   --diff-rem-forte: #f3c1b6;
   --diff-add-fundo: #e2f0dd;
   --diff-add-forte: #bfdeb3;
+  /* Variável `{{nome}}` no editor (decisão 117): azul ardósia, longe da argila do cursor e da
+     seleção. Contraste AA sobre o papel e sobre o próprio fundo. */
+  --variavel: #2f5d8a;
+  --variavel-fundo: #e7edf3;
   /* Sombras tingidas de marrom, nunca cinza neutro; só o que está "levantado" as recebe. */
   --sombra-cartao: 0 1px 2px rgb(74 52 33 / 0.07), 0 0 0 1px rgb(74 52 33 / 0.06);
   --sombra:
@@ -76,6 +80,8 @@
   --diff-rem-forte: #6b3528;
   --diff-add-fundo: #233826;
   --diff-add-forte: #345a39;
+  --variavel: #8fb4da;
+  --variavel-fundo: #2c3440;
   --sombra-cartao: 0 1px 2px rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.05);
   --sombra:
     0 24px 48px -16px rgb(0 0 0 / 0.6), 0 6px 14px -4px rgb(0 0 0 / 0.3),

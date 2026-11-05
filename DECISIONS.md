@@ -457,3 +457,14 @@ Registro cronológico das decisões tomadas no projeto. Seções mais recentes n
      - Descartado: renomear automaticamente (`x 2.md`), que mudaria nomes de arquivo sem o usuário ver.
 
 125. **O arrastar da lista usa um MIME próprio (`application/x-prompt-library`), e o item arrastado fica num módulo (`src/web/mover.ts`).** O `dataTransfer` só é legível no `drop`; pelo módulo, o `dragover` já sabe a Coleção de origem, que não é destacada nem aceita a soltura. Os alvos são "Sem coleção" e cada Coleção (não Todos, Favoritos nem Tags). Soltar o Prompt aberto avisa o painel por um evento local (`gravado`), que troca a base na hora, sem esperar o SSE.
+
+## 2026-11-05: roadmap-02, M2, Variáveis
+
+### Decisões
+
+126. **Variável é `{{nome}}` com nome feito de letras, dígitos, `_` e `-` (`[\p{L}\p{N}_-]+`), com espaços e tabs nas pontas aparados (`{{ a }}` é `{{a}}`). `{{nome do cliente}}`, `{{}}`, chaves triplas (`{{{a}}}`) e quebra de linha entre as chaves não são Variáveis. Vale em qualquer lugar do texto, inclusive em blocos de código. Um campo vazio mantém o `{{nome}}` literal no texto copiado.** Detalha as decisões 114 a 116.
+     - Por quê: o campo vazio também é a saída para Prompts que falam de templates e usam `{{...}}` de verdade.
+     - Descartados: nomes com espaço; ignorar Variáveis dentro de blocos de código.
+
+127. **O fluxo de cópia passa por um store de módulo (`src/web/copia.ts`): `pedirCopia` busca o texto salvo; sem Variáveis, copia direto; com Variáveis, publica o pedido para o `FormularioVariaveis`, montado uma vez no `App`. Cada chamador (botão Copiar do painel, Enter da Paleta) passa o próprio `aoCopiar` com o toast de hoje.** No formulário, o `writeText` acontece no próprio clique ou tecla; em caso de falha o formulário fica aberto.
+     - Descartado: um formulário dentro de cada chamador, o que exigiria manter a Paleta aberta.

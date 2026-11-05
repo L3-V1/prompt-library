@@ -137,11 +137,9 @@ export function useDiretrizes() {
   return useQuery({ queryKey: chaves.diretrizes, queryFn: lerDiretrizes });
 }
 
-/** Copia o corpo salvo do Prompt (decisão 25) para a área de transferência. */
-export async function copiarPrompt(id: string): Promise<void> {
-  const texto = await pedirTexto(api.api.prompts[':id'].copia.$get({ param: { id } }));
-  await navigator.clipboard.writeText(texto);
-}
+/** O corpo salvo do Prompt, verbatim, como vai para a área de transferência (decisão 25). */
+export const lerTextoCopia = (id: string): Promise<string> =>
+  pedirTexto(api.api.prompts[':id'].copia.$get({ param: { id } }));
 
 // --- Escritas ---
 // Cada escrita atualiza o cache do próprio Prompt; o resto é invalidado pelo evento SSE.
