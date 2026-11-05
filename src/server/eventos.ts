@@ -1,7 +1,11 @@
+import type { Analise } from '../core/index.js';
 import type { Mudancas } from './indice.js';
 
 export type Evento =
-  { tipo: 'acervo'; dados: Mudancas } | { tipo: 'diretrizes'; dados: { hash: string | null } };
+  | { tipo: 'acervo'; dados: Mudancas }
+  | { tipo: 'diretrizes'; dados: { hash: string | null } }
+  /** A Análise do Prompt mudou; `null` = concluída ou descartada. */
+  | { tipo: 'analise'; dados: { promptId: string; analise: Analise | null } };
 
 type Ouvinte = (evento: Evento) => void;
 

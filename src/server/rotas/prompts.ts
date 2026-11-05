@@ -34,7 +34,7 @@ const alteracoes = z.object({
   baseHash: z.string(),
 });
 
-export function rotasPrompts({ acervo, indice }: Deps) {
+export function rotasPrompts({ acervo, indice, analises }: Deps) {
   function obter(id: string): Prompt {
     const prompt = indice.obter(id);
     if (!prompt) throw new PromptNaoEncontradoError(id);
@@ -83,7 +83,10 @@ export function rotasPrompts({ acervo, indice }: Deps) {
       return c.json(await escrever(() => acervo.favoritar(c.req.param('id'), favorito)));
     })
     .delete('/:id', async (c) => {
-      await escrever(() => acervo.excluir(c.req.param('id')));
+      const id = c.req.param('id');
+      await escrever(() => acervo.excluir(id));
+      // A Análise em andamento vai junto; o Prompt já está na lixeira.
+      await analises.descartar(id);
       return c.body(null, 204);
     })
     .get('/:id/copia', (c) => {

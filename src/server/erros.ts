@@ -5,12 +5,15 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { z } from 'zod';
 
 import {
+  AnaliseInvalidaError,
+  AnaliseNaoEncontradaError,
   ColecaoInvalidaError,
   ColecaoJaExisteError,
   ColecaoNaoEncontradaError,
   ConflitoError,
   DiretrizesConflitoError,
   PromptNaoEncontradoError,
+  SugestaoIndisponivelError,
   VersaoNaoEncontradaError,
   type EstadoDiretrizes,
   type Prompt,
@@ -111,6 +114,15 @@ export const tratarErro: ErrorHandler = (erro, c) => {
   }
   if (erro instanceof ColecaoJaExisteError) {
     return resposta(c, 409, 'colecao_ja_existe', erro.message);
+  }
+  if (erro instanceof AnaliseNaoEncontradaError) {
+    return resposta(c, 404, 'analise_nao_encontrada', erro.message);
+  }
+  if (erro instanceof SugestaoIndisponivelError) {
+    return resposta(c, 409, 'sugestao_indisponivel', erro.message);
+  }
+  if (erro instanceof AnaliseInvalidaError) {
+    return resposta(c, 409, 'analise_invalida', erro.message);
   }
   if (erro instanceof HTTPException) {
     // Lançada pelo validador do Hono, por exemplo com JSON malformado.

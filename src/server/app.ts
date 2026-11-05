@@ -2,6 +2,7 @@ import { Hono, type MiddlewareHandler } from 'hono';
 
 import type { Deps } from './deps.js';
 import { ErroHttp, rotaNaoEncontrada, tratarErro } from './erros.js';
+import { rotasAnalise } from './rotas/analise.js';
 import { rotasColecoes } from './rotas/colecoes.js';
 import { rotasDiretrizes } from './rotas/diretrizes.js';
 import { rotasEventos } from './rotas/eventos.js';
@@ -64,6 +65,7 @@ export function criarApp(deps: Deps) {
     .get('/api/health', (c) => c.json({ ok: true }))
     .route('/api/prompts', rotasPrompts(deps))
     .route('/api/prompts', rotasVersoes(deps))
+    .route('/api/prompts', rotasAnalise(deps))
     .route('/api/colecoes', rotasColecoes(deps))
     .route('/api/tags', rotasTags(deps))
     .route('/api/diretrizes', rotasDiretrizes(deps))
