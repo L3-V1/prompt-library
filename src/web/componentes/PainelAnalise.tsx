@@ -9,6 +9,7 @@ import {
   resumoStatus,
   salvarModelo,
   tempoDecorrido,
+  textoAtividade,
   textoResumo,
   type ModeloEscolhido,
 } from '../analise-ui';
@@ -24,6 +25,7 @@ import {
   type OpcoesAnalise,
   type Sugestao,
 } from '../dados/analise';
+import { useAtividade } from '../dados/atividade';
 import { ErroApi, mensagemDeErro } from '../dados/cliente';
 import { CartaoSugestao } from './CartaoSugestao';
 import { Confirmacao } from './Confirmacao';
@@ -192,6 +194,8 @@ export function PainelAnalise({
   };
 
   const gerando = analise?.execucao ?? null;
+  const atividade = useAtividade(id);
+  const textoAtual = gerando && atividade ? textoAtividade(atividade) : null;
   const resumo = resumoStatus(analise?.sugestoes ?? []);
 
   let conteudo: ReactNode;
@@ -240,11 +244,18 @@ export function PainelAnalise({
               className="size-4 shrink-0 animate-spin rounded-full border-2 border-terracota border-t-transparent"
               aria-hidden="true"
             />
-            <span className="flex-1">
-              {gerando.tipo === 'sugestao' ? 'Regenerando a Sugestão…' : 'Gerando Sugestões…'}{' '}
-              <span className="text-suave">
-                <Decorrido inicio={gerando.iniciadaEm} />
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span>
+                {gerando.tipo === 'sugestao' ? 'Regenerando a Sugestão…' : 'Gerando Sugestões…'}{' '}
+                <span className="text-suave">
+                  <Decorrido inicio={gerando.iniciadaEm} />
+                </span>
               </span>
+              {textoAtual && (
+                <span className="truncate text-xs text-suave" title={textoAtual} aria-live="off">
+                  {textoAtual}
+                </span>
+              )}
             </span>
             <button
               type="button"
