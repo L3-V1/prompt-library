@@ -6,12 +6,17 @@ import {
   Decoration,
   EditorView,
   keymap,
+  MatchDecorator,
   placeholder as placeholderCm,
+  ViewPlugin,
   type DecorationSet,
+  type ViewUpdate,
 } from '@codemirror/view';
 import { tags as t } from '@lezer/highlight';
 import { basicSetup } from 'codemirror';
 import { useEffect, useRef, type RefObject } from 'react';
+
+import { PADRAO_VARIAVEL } from '../variaveis';
 
 // Tema ligado aos tokens CSS: troca sozinho com `data-tema`.
 const tema = EditorView.theme({
@@ -63,6 +68,11 @@ const tema = EditorView.theme({
     borderRadius: '2px',
     boxShadow: '0 0 0 1px color-mix(in srgb, var(--terracota) 55%, transparent)',
   },
+  '.cm-variavel': {
+    color: 'var(--variavel)',
+    backgroundColor: 'var(--variavel-fundo)',
+    borderRadius: '3px',
+  },
   '.cm-foldPlaceholder': {
     backgroundColor: 'var(--realce)',
     border: 'none',
@@ -112,6 +122,25 @@ const campoDestaque = StateField.define<DecorationSet>({
   provide: (campo) => EditorView.decorations.from(campo),
 });
 
+// Variáveis `{{nome}}` com destaque leve (decisão 117), só na parte visível do texto.
+const decoradorVariaveis = new MatchDecorator({
+  regexp: PADRAO_VARIAVEL,
+  decoration: Decoration.mark({ class: 'cm-variavel' }),
+});
+
+const destaqueVariaveis = ViewPlugin.fromClass(
+  class {
+    decoracoes: DecorationSet;
+    constructor(view: EditorView) {
+      this.decoracoes = decoradorVariaveis.createDeco(view);
+    }
+    update(u: ViewUpdate) {
+      this.decoracoes = decoradorVariaveis.updateDeco(u, this.decoracoes);
+    }
+  },
+  { decorations: (v) => v.decoracoes },
+);
+
 interface Callbacks {
   onMudar: (valor: string) => void;
   onSalvar: () => void;
@@ -138,6 +167,7 @@ function extensoes(
     syntaxHighlighting(realce),
     EditorView.lineWrapping,
     tema,
+    destaqueVariaveis,
     campoDestaque,
     EditorView.contentAttributes.of({ 'aria-label': rotulo }),
     EditorView.updateListener.of((u) => {
