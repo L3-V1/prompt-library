@@ -73,6 +73,7 @@ export function montarPrompt(d: DadosPrompt): string {
         '- `trechoNovo` é o texto que substitui o trecho; para remover, use texto vazio.',
         '- `justificativa` é curta, em português do Brasil.',
         '- Não mude o idioma do Prompt: o `trechoNovo` fica no mesmo idioma do texto original.',
+        '- Trechos `{{nome}}` são Variáveis, preenchidas pelo usuário ao copiar o Prompt: preserve-as exatamente (mesmo nome e mesmas chaves). Só proponha uma Variável nova, no mesmo formato `{{nome}}`, quando um valor mudar a cada uso do Prompt.',
         '- Proponha só mudanças que melhorem o Prompt de fato; se não houver nenhuma, devolva a lista vazia.',
       ].join('\n'),
     ),
