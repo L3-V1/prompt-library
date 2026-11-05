@@ -13,7 +13,7 @@ export type EventoServidor =
 
 /**
  * Queries a invalidar para um evento (prefixos de chave). A Análise não é invalidada: o evento
- * já traz o estado novo, gravado direto no cache.
+ * já traz o estado novo, gravado direto no cache (com o conjunto das abertas).
  */
 export function chavesParaInvalidar(evento: EventoServidor): QueryKey[] {
   if (evento.tipo === 'diretrizes') return [chaves.diretrizes];
@@ -38,7 +38,8 @@ export function ouvirEventos(ouvinte: Ouvinte): () => void {
   return () => ouvintes.delete(ouvinte);
 }
 
-function emitir(evento: EventoServidor): void {
+/** Aplica um evento do servidor ao cache e avisa os ouvintes. */
+export function emitir(evento: EventoServidor): void {
   if (evento.tipo === 'analise') guardarAnalise(evento.dados.promptId, evento.dados.analise);
   for (const chave of chavesParaInvalidar(evento)) {
     void clienteConsultas.invalidateQueries({ queryKey: chave });

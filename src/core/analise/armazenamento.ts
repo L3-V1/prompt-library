@@ -103,7 +103,23 @@ export function criarArmazenamentoAnalises(pastas: Pick<Pastas, 'analises'>) {
     }
   }
 
-  return { ler, gravar, apagar };
+  /** Os `promptId` com Análise aberta (os `*.json` de `.analises/`), em ordem alfabética. */
+  async function listar(): Promise<string[]> {
+    let nomes: string[];
+    try {
+      nomes = await fs.readdir(pastas.analises);
+    } catch (erro) {
+      if ((erro as NodeJS.ErrnoException).code === 'ENOENT') return [];
+      throw erro;
+    }
+    return nomes
+      .filter((n) => n.endsWith('.json'))
+      .map((n) => n.slice(0, -'.json'.length))
+      .filter(idValido)
+      .sort();
+  }
+
+  return { ler, gravar, apagar, listar };
 }
 
 export type ArmazenamentoAnalises = ReturnType<typeof criarArmazenamentoAnalises>;

@@ -12,8 +12,14 @@ export type AnaliseOuNada = InferResponseType<typeof rotas.$get>;
 export type Analise = NonNullable<AnaliseOuNada>;
 export type Sugestao = Analise['sugestoes'][number];
 
+/** Os ids com Análise aberta, depois de `promptId` ganhar (`aberta`) ou perder a sua. */
+export function abertasCom(ids: string[], promptId: string, aberta: boolean): string[] {
+  if (ids.includes(promptId) === aberta) return ids;
+  return aberta ? [...ids, promptId].sort() : ids.filter((id) => id !== promptId);
+}
+
 /**
- * Grava a Análise no cache. Uma Análise mais antiga que a do cache (evento SSE atrasado em
+ * Grava a Análise no cache e acerta o conjunto das abertas (indicador na lista). Uma Análise mais antiga que a do cache (evento SSE atrasado em
  * relação à resposta de uma ação) é ignorada.
  */
 export function guardarAnalise(id: string, analise: AnaliseOuNada): AnaliseOuNada {
@@ -27,6 +33,10 @@ export function guardarAnalise(id: string, analise: AnaliseOuNada): AnaliseOuNad
     return atual;
   }
   clienteConsultas.setQueryData(chaves.analise(id), analise);
+  // Sem a lista no cache (ainda não buscada), nada a acertar.
+  clienteConsultas.setQueryData<string[]>(chaves.analises, (ids) =>
+    ids === undefined ? ids : abertasCom(ids, id, analise !== null),
+  );
   return analise;
 }
 
@@ -35,6 +45,14 @@ export const lerAnalise = (id: string): Promise<AnaliseOuNada> =>
 
 export function useAnalise(id: string) {
   return useQuery({ queryKey: chaves.analise(id), queryFn: () => lerAnalise(id) });
+}
+
+/** Os ids dos Prompts com Análise aberta; o SSE `analise` mantém o conjunto em dia. */
+export function useAnalisesAbertas() {
+  return useQuery({
+    queryKey: chaves.analises,
+    queryFn: async (): Promise<string[]> => (await pedir(api.api.analises.$get())).ids,
+  });
 }
 
 export interface OpcoesAnalise {

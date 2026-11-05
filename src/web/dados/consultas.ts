@@ -32,6 +32,7 @@ export const chaves = {
   diff: (id: string, versaoId: string, para: string) => ['diff', id, versaoId, para] as const,
   diretrizes: ['diretrizes'] as const,
   analise: (id: string) => ['analise', id] as const,
+  analises: ['analises'] as const,
 } satisfies Record<string, QueryKey | ((...args: never[]) => QueryKey)>;
 
 export const clienteConsultas = new QueryClient({
