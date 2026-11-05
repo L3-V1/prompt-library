@@ -1,6 +1,12 @@
 import { hc, type InferResponseType } from 'hono/client';
 
-import type { Change, EstadoDiretrizes, MotivoVersao, Versao } from '../../core/index';
+import type {
+  Change,
+  EstadoDiretrizes,
+  MotivoVersao,
+  PreviaExclusao,
+  Versao,
+} from '../../core/index';
 import type { AppType } from '../../server/app';
 import type { CorpoConflito } from '../../server/erros';
 import type { Mudancas, TotalColecao, TotalTag } from '../../server/indice';
@@ -11,7 +17,16 @@ export const api = hc<AppType>('/');
 export type Prompt = InferResponseType<(typeof api.api.prompts)[':id']['$get']>;
 export type Listagem = InferResponseType<typeof api.api.prompts.$get>;
 export type Resumo = Listagem['prompts'][number];
-export type { Change, EstadoDiretrizes, MotivoVersao, Mudancas, TotalColecao, TotalTag, Versao };
+export type {
+  Change,
+  EstadoDiretrizes,
+  MotivoVersao,
+  Mudancas,
+  PreviaExclusao,
+  TotalColecao,
+  TotalTag,
+  Versao,
+};
 
 /** Erro da API, com a mensagem pt-BR do servidor em `message`. */
 export class ErroApi extends Error {

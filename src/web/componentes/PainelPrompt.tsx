@@ -9,7 +9,6 @@ import {
   excluirPrompt,
   favoritarPrompt,
   filtrosDe,
-  moverPrompt,
   relerPrompt,
   restaurarVersao,
   salvarPrompt,
@@ -30,6 +29,7 @@ import {
   type Reacao,
 } from '../edicao';
 import { abrirPrompt, fecharPainel, navegacaoAtual, registrarProtecao } from '../navegacao';
+import { moverParaColecao } from '../mover';
 import { useRascunhoAnalise } from '../rascunho-analise';
 import { SEM_COLECAO, TECLA_MOD } from '../textos';
 import { CampoTags } from './CampoTags';
@@ -159,6 +159,12 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
     () =>
       ouvirEventos((evento) => {
         if (evento.tipo === 'diretrizes' || evento.tipo === 'analise') return;
+        // Gravado por esta aba fora do painel: o estado novo já veio na resposta.
+        if (evento.tipo === 'gravado') {
+          if (evento.dados.id === id)
+            aplicar(reagirAMudancaExterna(estadoRef.current, evento.dados));
+          return;
+        }
         if (
           evento.tipo === 'acervo' &&
           !evento.dados.alterados.includes(id) &&
@@ -280,16 +286,6 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
     }
   }
 
-  async function mover(colecao: string | null) {
-    try {
-      const novo = await moverPrompt(id, colecao);
-      aplicar(reagirAMudancaExterna(estadoRef.current, novo));
-      toast.sucesso(`Movido para ${colecao ?? SEM_COLECAO}`);
-    } catch (erro) {
-      toast.erro(`Não foi possível mover: ${mensagemDeErro(erro)}`);
-    }
-  }
-
   async function copiar() {
     try {
       await copiarPrompt(id);
@@ -393,7 +389,9 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
                 <span className="sr-only">Coleção</span>
                 <select
                   value={base.colecao ?? ''}
-                  onChange={(e) => void mover(e.target.value === '' ? null : e.target.value)}
+                  onChange={(e) =>
+                    void moverParaColecao(id, e.target.value === '' ? null : e.target.value)
+                  }
                   className="max-w-44 rounded-md border border-transparent bg-transparent py-0.5 pr-1 text-xs font-medium text-texto transition-colors hover:border-borda focus:border-terracota focus:outline-none"
                 >
                   <option value="">{SEM_COLECAO}</option>

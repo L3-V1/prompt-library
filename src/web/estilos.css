@@ -202,6 +202,11 @@
   .item[aria-current='true'] {
     @apply bg-elevada shadow-cartao hover:bg-elevada;
   }
+  /* Coleção sob um Prompt arrastado que pode ser solto nela (decisão 125). */
+  .item-alvo,
+  .item-alvo[aria-current='true'] {
+    @apply bg-realce ring-2 ring-terracota ring-inset hover:bg-realce;
+  }
 
   /* Rótulo de seção nos painéis: caixa de frase, discreto. */
   .rotulo-secao {

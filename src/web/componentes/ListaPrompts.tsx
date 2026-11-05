@@ -4,6 +4,7 @@ import { useAnalisesAbertas } from '../dados/analise';
 import { mensagemDeErro } from '../dados/cliente';
 import { filtrosDe, usePrompts } from '../dados/consultas';
 import { abrirPrompt, buscarTexto, useNavegacao, type Navegacao } from '../navegacao';
+import { encerrarArrasto, iniciarArrasto, MIME_PROMPT } from '../mover';
 import { ANALISE_EM_ANDAMENTO, SEM_COLECAO, TECLA_MOD } from '../textos';
 import { EstadoVazio } from './EstadoVazio';
 import { Icone } from './Icone';
@@ -150,8 +151,15 @@ export function ListaPrompts({ onAbrirMenu }: { onAbrirMenu: () => void }) {
                   <button
                     type="button"
                     data-item
+                    draggable
                     aria-current={aberto}
                     onClick={() => abrirPrompt(p.id)}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData(MIME_PROMPT, p.id);
+                      e.dataTransfer.effectAllowed = 'move';
+                      iniciarArrasto({ id: p.id, colecao: p.colecao });
+                    }}
+                    onDragEnd={encerrarArrasto}
                     className="item flex w-full flex-col gap-1.5 text-left"
                   >
                     <span className="flex w-full items-start gap-2">

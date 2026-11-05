@@ -53,7 +53,9 @@ function EdicaoDiretrizes({ inicial }: { inicial: Arquivo }) {
   useEffect(
     () =>
       ouvirEventos((evento) => {
-        if (evento.tipo === 'acervo' || evento.tipo === 'analise') return;
+        if (evento.tipo === 'acervo' || evento.tipo === 'analise' || evento.tipo === 'gravado') {
+          return;
+        }
         if (evento.tipo === 'diretrizes' && evento.dados.hash === estadoRef.current.base.hash) {
           return;
         }
