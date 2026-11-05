@@ -507,6 +507,18 @@ describe('análise', () => {
     expect(forcar.status).toBe(200);
   });
 
+  it('GET /api/analises lista os Prompts com Análise aberta', async () => {
+    const { json, pedir } = await montar({ 'Prompts/A.md': PROMPT_A });
+    const ids = async () =>
+      ((await (await pedir('/api/analises')).json()) as { ids: string[] }).ids;
+    expect(await ids()).toEqual([]);
+    await json('POST', '/api/prompts/a/analise', {});
+    await pronta(pedir);
+    expect(await ids()).toEqual(['a']);
+    await pedir('/api/prompts/a/analise', { method: 'DELETE' });
+    expect(await ids()).toEqual([]);
+  });
+
   it('DELETE descarta (204) e excluir o Prompt apaga a Análise', async () => {
     const { json, pedir, vault } = await montar({ 'Prompts/A.md': PROMPT_A });
     await json('POST', '/api/prompts/a/analise', {});

@@ -32,6 +32,19 @@ const ANALISE: Analise = {
 };
 
 describe('armazenamento de Análises', () => {
+  it('listar: pasta ausente devolve [], e só os .json de ids válidos entram', async () => {
+    const vault = await criarVaultTemporario();
+    const arm = criarArmazenamentoAnalises(vault.pastas);
+    expect(await arm.listar()).toEqual([]);
+    await arm.gravar({ ...ANALISE, promptId: 'zeta' });
+    await arm.gravar(ANALISE);
+    await vault.escrever('Prompts/.analises/notas.txt', 'x');
+    await vault.escrever('Prompts/.analises/.abc.json.tmp-123', '{}');
+    expect(await arm.listar()).toEqual(['abc', 'zeta']);
+    await arm.apagar('abc');
+    expect(await arm.listar()).toEqual(['zeta']);
+  });
+
   it('ida e volta em Prompts/.analises/<id>.json', async () => {
     const vault = await criarVaultTemporario();
     const arm = criarArmazenamentoAnalises(vault.pastas);
