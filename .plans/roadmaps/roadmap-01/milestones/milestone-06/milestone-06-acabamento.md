@@ -1,11 +1,13 @@
 ---
 titulo: "M6: Acabamento"
 data: 2026-11-05
-status: aprovado
+status: implementado
 tipo: milestone
 numero: "06"
 pai: roadmaps/roadmap-01
 triagem: ok
+branch: feat/milestone-06-acabamento
+encerrado_em: 2026-11-05
 ---
 
 # M6: Acabamento
@@ -119,3 +121,14 @@ Segue o padrão de `scripts/instalar-save.mjs` (idempotente, nunca apaga o que n
 5. `git -C ~/Documentos/vault check-ignore Prompts/.analises/x.json` confirma o ignore.
 6. `curl http://<IP da rede local>:5174` falha (só loopback).
 7. Commit na branch `feat/milestone-06-acabamento` só quando você pedir.
+
+## Encerramento das pendências
+
+Decidido em 2026-11-05, no encerramento da etapa.
+
+| Pendência | Origem | Destino | Motivo |
+|---|---|---|---|
+| Linger (`loginctl enable-linger`) | Fora do escopo | Descartar | O app só é usado com a sessão aberta (decisão 103) |
+| Variáveis `{{...}}` (decisão 28) | Fora do escopo | Plano avulso | Maior funcionalidade pós-MVP; cabe num plano próprio |
+| Progresso com `stream-json` | Fora do escopo | Plano avulso | Mantém o destino do M5: melhoria sem urgência |
+| Arrastar entre Coleções e excluir Coleção | Fora do escopo | Plano avulso | Excluir Coleção exige decidir o destino dos Prompts dela |
