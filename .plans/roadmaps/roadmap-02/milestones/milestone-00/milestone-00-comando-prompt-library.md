@@ -1,7 +1,9 @@
 ---
 titulo: "roadmap-02, M0: comando prompt-library"
 data: 2026-11-05
-status: aprovado
+status: implementado
+branch: feat/milestone-00-comando-prompt-library
+encerrado_em: 2026-11-05
 tipo: milestone
 numero: "00"
 pai: roadmaps/roadmap-02
