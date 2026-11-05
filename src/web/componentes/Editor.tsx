@@ -17,22 +17,30 @@ import { useEffect, useRef, type RefObject } from 'react';
 const tema = EditorView.theme({
   '&': {
     height: '100%',
-    fontSize: '14px',
+    fontSize: '15px',
     color: 'var(--texto)',
     backgroundColor: 'var(--fundo)',
   },
   '&.cm-focused': { outline: 'none' },
-  '.cm-scroller': { fontFamily: 'var(--fonte-mono)', lineHeight: '1.65' },
-  '.cm-content': { padding: '16px 0', caretColor: 'var(--terracota)' },
-  '.cm-line': { padding: '0 20px 0 12px' },
+  // A folha: o texto fica na mesma coluna central do título (utilitário `coluna-folha`).
+  '.cm-scroller': {
+    fontFamily: 'var(--fonte-mono)',
+    lineHeight: '1.7',
+    // O número da linha fica na margem, à esquerda da coluna.
+    paddingLeft: 'max(0px, calc((100% - var(--largura-folha)) / 2 - 2.75rem))',
+    paddingRight: 'max(var(--margem-folha), calc((100% - var(--largura-folha)) / 2))',
+  },
+  '.cm-content': { padding: '24px 0 96px', caretColor: 'var(--terracota)' },
+  '.cm-line': { padding: '0 0 0 12px' },
   '.cm-gutters': {
     backgroundColor: 'var(--fundo)',
-    color: 'var(--texto-suave)',
+    color: 'color-mix(in srgb, var(--texto-suave) 70%, transparent)',
     border: 'none',
-    opacity: '0.7',
+    fontSize: '12px',
   },
-  '.cm-activeLine': { backgroundColor: 'color-mix(in srgb, var(--realce) 55%, transparent)' },
-  '.cm-activeLineGutter': { backgroundColor: 'transparent', color: 'var(--texto)' },
+  '.cm-gutter.cm-lineNumbers .cm-gutterElement': { paddingTop: '2px' },
+  '.cm-activeLine': { backgroundColor: 'color-mix(in srgb, var(--realce) 45%, transparent)' },
+  '.cm-activeLineGutter': { backgroundColor: 'transparent', color: 'var(--terracota)' },
   '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--terracota)', borderLeftWidth: '2px' },
   '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground':
     { backgroundColor: 'color-mix(in srgb, var(--terracota) 25%, transparent) !important' },
@@ -46,6 +54,8 @@ const tema = EditorView.theme({
   '.cm-tooltip': {
     backgroundColor: 'var(--elevada)',
     border: '1px solid var(--borda)',
+    borderRadius: '8px',
+    boxShadow: 'var(--sombra)',
     color: 'var(--texto)',
   },
   '.cm-destaque': {
@@ -61,7 +71,7 @@ const tema = EditorView.theme({
 });
 
 const realce = HighlightStyle.define([
-  { tag: t.heading, color: 'var(--terracota)', fontWeight: '700' },
+  { tag: t.heading, color: 'var(--destaque)', fontWeight: '700' },
   { tag: t.strong, fontWeight: '700' },
   { tag: t.emphasis, fontStyle: 'italic' },
   { tag: t.strikethrough, textDecoration: 'line-through' },
@@ -69,7 +79,6 @@ const realce = HighlightStyle.define([
   { tag: t.monospace, color: 'var(--destaque)' },
   { tag: [t.processingInstruction, t.contentSeparator, t.meta], color: 'var(--texto-suave)' },
   { tag: t.quote, color: 'var(--texto-suave)', fontStyle: 'italic' },
-  { tag: t.list, color: 'var(--terracota)' },
   { tag: [t.keyword, t.operator], color: 'var(--destaque)' },
   { tag: [t.string, t.special(t.string)], color: 'var(--sucesso)' },
   { tag: [t.number, t.bool, t.atom], color: 'var(--terracota)' },
