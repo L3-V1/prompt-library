@@ -9,12 +9,15 @@
   "scripts": {
     "dev": "concurrently -n server,web -c blue,magenta \"NODE_ENV=development tsx watch src/server/main.ts\" \"vite\"",
     "build": "vite build && tsc -p tsconfig.server.json",
-    "start": "NODE_ENV=production node dist/server/main.js",
+    "start": "npm run build && npm run serve",
+    "serve": "NODE_ENV=production node dist/server/main.js",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc -b",
-    "save:install": "node scripts/instalar-save.mjs"
+    "save:install": "node scripts/instalar-save.mjs",
+    "servico:instalar": "node scripts/servico.mjs instalar",
+    "servico:remover": "node scripts/servico.mjs remover"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.1",
