@@ -4,7 +4,9 @@ data: 2026-11-05
 tipo: milestone
 roadmap: "02"
 numero: "02"
-status: aprovado
+status: implementado
+branch: feat/milestone-02-variaveis
+encerrado_em: 2026-11-05
 pai: roadmaps/roadmap-02
 triagem: ok
 ---
