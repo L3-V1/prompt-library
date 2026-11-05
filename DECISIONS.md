@@ -468,3 +468,14 @@ Registro cronológico das decisões tomadas no projeto. Seções mais recentes n
 
 127. **O fluxo de cópia passa por um store de módulo (`src/web/copia.ts`): `pedirCopia` busca o texto salvo; sem Variáveis, copia direto; com Variáveis, publica o pedido para o `FormularioVariaveis`, montado uma vez no `App`. Cada chamador (botão Copiar do painel, Enter da Paleta) passa o próprio `aoCopiar` com o toast de hoje.** No formulário, o `writeText` acontece no próprio clique ou tecla; em caso de falha o formulário fica aberto.
      - Descartado: um formulário dentro de cada chamador, o que exigiria manter a Paleta aberta.
+
+## 2026-11-05: roadmap-02, M3, progresso com `stream-json`
+
+### Decisões
+
+128. **A Análise roda o `claude` com `--output-format stream-json --verbose` e lê o stdout em JSONL. Cada bloco `tool_use` de um evento `assistant` vira uma atividade: `Read` → `ler` com o `file_path` relativo ao cwd (`Prompts/`), `Grep` → `buscar` com o `pattern`, `Glob` → `listar` com o `pattern`. O `StructuredOutput` (o `--json-schema`) e ferramentas desconhecidas são ignorados. O último evento, `type: "result"`, traz os mesmos campos do envelope do `json` e substitui a leitura dele; sem `result` e com código 0, é erro.** Investigado com o `claude` 2.1.318 (Haiku): os `tool_use` chegam antes do `tool_result` correspondente, e o `Read` traz o caminho absoluto. Fora do cwd, o caminho fica como veio. O stdout não é mais acumulado inteiro, só os últimos 2 000 caracteres para a mensagem de erro. Resolve as duas condições do roadmap-02 para a decisão 119.
+     - Descartado: gravar a atividade em `.analises/`.
+
+129. **A atividade vai num evento SSE próprio, `atividade` (`{ promptId, atividade }`), e não é gravada. O servidor emite `atividade: null` ao disparar a geração e descarta as de um job cancelado ou substituído. O web guarda a última atividade por Prompt num store de módulo (`src/web/dados/atividade.ts`), que é limpo quando a Análise chega sem `execucao` e ao reconectar o SSE. O painel mostra uma linha a mais abaixo de "Gerando Sugestões…", truncada e com `aria-live="off"`.** Quem abre a página no meio da geração só vê a linha a partir do próximo `tool_use`.
+     - Por quê: o evento `analise` carrega a Análise gravada, com o `atualizadaEm` que o `guardarAnalise` usa para ordenar; misturar nele um dado efêmero quebraria isso.
+     - Descartado: guardar a atividade no `Job` para o `GET` da Análise devolver.
