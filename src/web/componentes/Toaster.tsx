@@ -61,7 +61,7 @@ export function Toaster() {
           <p className="min-w-0 flex-1 break-words">{a.texto}</p>
           <button
             type="button"
-            className="-my-1 -mr-2 rounded p-1 text-suave hover:text-texto"
+            className="botao-icone -my-1.5 -mr-2 size-7"
             aria-label="Fechar aviso"
             onClick={() => fechar(a.id)}
           >

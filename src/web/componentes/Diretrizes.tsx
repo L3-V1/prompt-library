@@ -174,7 +174,7 @@ function EdicaoDiretrizes({ inicial }: { inicial: Arquivo }) {
       {aviso && (
         <div
           role="alert"
-          className="flex flex-wrap items-center gap-3 border-b border-borda bg-realce px-6 py-2.5 text-sm"
+          className="flex flex-wrap items-center gap-3 border-b border-borda bg-realce px-4 py-2.5 md:px-6 text-sm"
         >
           <Icone nome="alerta" className="size-4 text-terracota" />
           <span className="flex-1">As Diretrizes mudaram no disco.</span>
@@ -193,7 +193,7 @@ function EdicaoDiretrizes({ inicial }: { inicial: Arquivo }) {
         </div>
       )}
       {vazio && (
-        <div className="border-b border-borda bg-superficie px-6 py-3 text-sm text-suave">
+        <div className="border-b border-borda bg-superficie px-4 py-3 md:px-6 text-sm text-suave">
           Escreva aqui os critérios do que você considera um bom Prompt: tom, estrutura, o que nunca
           pode faltar. A Análise vai usá-los para sugerir melhorias.
         </div>

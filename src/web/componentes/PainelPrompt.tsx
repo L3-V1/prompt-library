@@ -500,7 +500,7 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
       {removido && (
         <div
           role="alert"
-          className="flex flex-wrap items-center gap-3 border-b border-borda bg-perigo-fundo px-6 py-2.5 text-sm"
+          className="flex flex-wrap items-center gap-3 border-b border-borda bg-perigo-fundo px-4 py-2.5 md:px-6 text-sm"
         >
           <Icone nome="alerta" className="size-4 text-perigo" />
           <span className="flex-1">
@@ -514,7 +514,7 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
       {aviso && !removido && (
         <div
           role="alert"
-          className="flex flex-wrap items-center gap-3 border-b border-borda bg-realce px-6 py-2.5 text-sm"
+          className="flex flex-wrap items-center gap-3 border-b border-borda bg-realce px-4 py-2.5 md:px-6 text-sm"
         >
           <Icone nome="alerta" className="size-4 text-terracota" />
           <span className="flex-1">Este Prompt mudou no disco.</span>
@@ -530,7 +530,7 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
       {emAnalise && (
         <div
           role="status"
-          className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-borda bg-realce/70 px-6 py-2 text-sm"
+          className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-borda bg-realce/70 px-4 py-2 md:px-6 text-sm"
         >
           <Icone nome="faisca" className="size-4 text-terracota" />
           <span className="min-w-0 flex-1">
@@ -548,7 +548,7 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
       {promptMudouFora && (
         <div
           role="alert"
-          className="flex items-center gap-3 border-b border-borda bg-perigo-fundo px-6 py-2 text-sm"
+          className="flex items-center gap-3 border-b border-borda bg-perigo-fundo px-4 py-2 text-sm md:px-6"
         >
           <Icone nome="alerta" className="size-4 shrink-0 text-perigo" />
           <span>
