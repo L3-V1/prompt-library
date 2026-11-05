@@ -32,13 +32,15 @@ export function CampoTags({
       {tags.map((tag) => (
         <span
           key={tag}
-          className="inline-flex items-center gap-1 rounded-full bg-realce py-0.5 pr-1 pl-2.5 text-xs"
+          className="inline-flex max-w-full items-center gap-1 rounded-full bg-realce py-0.5 pr-1 pl-2.5 text-xs whitespace-nowrap"
         >
-          {tag}
+          <span className="max-w-48 truncate" title={tag}>
+            {tag}
+          </span>
           {!somenteLeitura && (
             <button
               type="button"
-              className="rounded-full p-0.5 text-suave hover:bg-borda hover:text-texto"
+              className="shrink-0 rounded-full p-0.5 text-suave hover:bg-borda hover:text-texto"
               aria-label={`Remover a Tag ${tag}`}
               onClick={() => onMudar(tags.filter((t) => t !== tag))}
             >

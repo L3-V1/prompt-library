@@ -74,7 +74,7 @@ export function CartaoSugestao({
     >
       <div className="flex items-start gap-2 px-4 pt-3 pb-2">
         <span
-          className={`mt-0.5 shrink-0 rounded-full px-2 py-px text-[11px] font-medium ${SELO[sugestao.status]}`}
+          className={`selo mt-0.5 shrink-0 px-2 text-[11px] font-medium ${SELO[sugestao.status]}`}
         >
           {ROTULO_STATUS[sugestao.status]}
         </span>

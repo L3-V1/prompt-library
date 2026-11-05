@@ -52,7 +52,7 @@ export function PainelVersoes({
         if (e.key === 'Escape' && !confirmar) onFechar();
       }}
     >
-      <div className="flex items-center gap-2 border-b border-borda px-5 py-3">
+      <div className="flex items-center gap-2 border-b border-borda px-4 py-3">
         <Icone nome="historico" className="size-4 text-terracota" />
         <h2 className="font-serif text-base font-semibold">Versões</h2>
         <span className="text-xs text-suave">{lista.length > 0 && `(${lista.length})`}</span>
@@ -68,15 +68,15 @@ export function PainelVersoes({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-        <ol className="max-h-48 shrink-0 overflow-y-auto border-b border-borda p-2 md:max-h-none md:w-64 md:border-r md:border-b-0">
+        {/* Sem Versões, a lista some e fica só o estado vazio ao lado. */}
+        <ol
+          className={`max-h-48 shrink-0 overflow-y-auto border-b border-borda p-2 md:max-h-none md:w-64 md:border-r md:border-b-0 ${
+            versoes.isSuccess && lista.length === 0 ? 'hidden' : ''
+          }`}
+        >
           {versoes.isPending && <li className="p-3 text-sm text-suave">Carregando…</li>}
           {versoes.isError && (
             <li className="p-3 text-sm text-perigo">{mensagemDeErro(versoes.error)}</li>
-          )}
-          {versoes.isSuccess && lista.length === 0 && (
-            <li className="p-3 text-sm text-suave">
-              Ainda não há Versões. A primeira é registrada no próximo salvamento.
-            </li>
           )}
           {lista.map((v, i) => (
             <li key={v.id}>
@@ -91,7 +91,7 @@ export function PainelVersoes({
                 <span className="font-medium">
                   {MOTIVOS[v.motivo]}
                   {i === 0 && (
-                    <span className="ml-2 rounded-full bg-elevada px-1.5 py-px text-[11px] font-normal text-suave">
+                    <span className="selo ml-2 bg-elevada text-[11px] font-normal text-suave">
                       mais recente
                     </span>
                   )}
@@ -103,7 +103,11 @@ export function PainelVersoes({
         </ol>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 p-4">
-          {!versao ? (
+          {versoes.isSuccess && lista.length === 0 ? (
+            <EstadoVazio icone="historico" titulo="Ainda não há Versões">
+              <p>A primeira é registrada no próximo salvamento.</p>
+            </EstadoVazio>
+          ) : !versao ? (
             <EstadoVazio icone="diff" titulo="Escolha uma Versão">
               <p>Veja o que mudou em relação ao texto atual ou à Versão anterior.</p>
             </EstadoVazio>

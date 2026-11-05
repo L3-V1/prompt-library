@@ -16,6 +16,11 @@ const opcoes = z.object({
   modelo: modelo.optional(),
 });
 
+/** Os Prompts com Análise aberta; montada em `/api/analises`. */
+export function rotasAnalises({ analises }: Deps) {
+  return new Hono().get('/', async (c) => c.json({ ids: await analises.listarAbertas() }));
+}
+
 /** Análise de um Prompt (decisões 13 a 18); montada em `/api/prompts`. */
 export function rotasAnalise({ analises, indice }: Deps) {
   function exigirPrompt(id: string): void {

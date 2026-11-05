@@ -348,3 +348,35 @@ Registro cronológico das decisões tomadas no projeto. Seções mais recentes n
 99. **Excluir um Prompt descarta a Análise dele.**
 
 100.  **O SSE se recupera de um reinício do servidor: o `ping` passou de 30 s para 15 s (revê a decisão 68), e o navegador recria o `EventSource` quando ele fecha de vez ou quando fica 25 s sem nada.** Por quê: no dev, o proxy do Vite segura a conexão depois que o servidor cai (o navegador não vê erro) e responde 502 às reconexões (o `EventSource` desiste com erro HTTP); sem isso, a tela ficava em "Gerando…" e nunca mostrava a execução interrompida.
+
+## 2026-11-05: M6, acabamento
+
+### Decisões
+
+101. **`npm start` é build + servidor (`npm run build && npm run serve`); o `serve` é o antigo `start` (`NODE_ENV=production node dist/server/main.js`).**
+     - Por quê: o roadmap pedia "build + servidor", e o `serve` fica para quem já tem o build (o serviço chama o `main.js` direto).
+
+102. **Em produção, o servidor acha `dist/web` a partir do próprio arquivo (`new URL('../web/', import.meta.url)`), e não do cwd.** O `serveStatic` do `@hono/node-server` 2.x aceita raiz absoluta (faz `path.join`).
+     - Sem `dist/web/index.html`, sai com "Build não encontrado (…): rode `npm run build`".
+     - `EADDRINUSE` na 5174 vira "Porta 5174 em uso. O serviço já está rodando? (`systemctl --user stop prompt-library`)", no `serve` e no `dev`.
+
+103. **O app roda como serviço `systemd --user` (`prompt-library.service`), que sobe no login, sem linger.** `npm run servico:instalar` e `servico:remover` (`scripts/servico.mjs`), no padrão do `save:install` (decisão 62).
+     - A unidade usa caminhos absolutos: `ExecStart` com o `process.execPath` da instalação, `PATH` com o dir do node, o do claude e os do sistema, e `PROMPT_LIBRARY_CLAUDE` absoluto (de `PROMPT_LIBRARY_CLAUDE` ou da busca no `PATH`). Por quê: o systemd não herda o `PATH` do shell, e o node e o claude ficam fora dos dirs do sistema (`/opt/node-…`, `~/.local/bin`).
+     - Sem claude encontrado, instala assim mesmo e avisa que a Análise vai falhar. `PROMPT_LIBRARY_VAULT` só entra na unidade se estiver definida na instalação.
+     - Posse pelo cabeçalho "# Gerado por prompt-library": unidade igual não muda nada; nossa, regrava (`daemon-reload` e `restart`); de outra origem, falha sem tocar. O `remover` só apaga a nossa.
+     - A geração é uma função pura (`scripts/servico-unidade.mjs`, com tipos em `.d.mts`) e testada; `scripts/` entrou no Vitest e no `tsconfig.node.json`. Valores com `%` viram `%%`; com espaço, vão entre aspas.
+     - Descartada: linger (`loginctl enable-linger`), desnecessário para um app usado só com a sessão aberta.
+
+104. **A lista de Prompts mostra um ícone (o mesmo do botão Analisar) nos Prompts com Análise aberta, com `title`/`aria-label` "Análise em andamento".** `GET /api/analises` → `{ ids }` (os `*.json` de `.analises/`), em cache na chave `['analises']`.
+     - O conjunto é acertado no `guardarAnalise`, que recebe tanto o evento SSE `analise` quanto as respostas das ações locais: entra com a Análise e sai com `null`. Sem a lista no cache, nada é criado. O `reconectado` já invalida tudo.
+     - Uma Análise com erro ou interrompida também conta: ela continua aberta até concluir ou descartar.
+
+105. **A decisão 43 foi aplicada: `Prompts/.analises/` está no `.gitignore` do vault, com um comentário.** Sem commit no vault (os commits lá são manuais, ADR 0003); `Prompts/.versoes/` segue versionado.
+
+106. **Revisão de UI com `ui-ux-kit:ui-guidelines`.**
+     - Os botões (`.botao`, `.botao-primario`, `.botao-perigo`) não quebram linha, e o `.botao-perigo` ganhou o estado desabilitado dos outros.
+     - Nova classe `.selo` para selos e chips curtos (status da Sugestão, "mais recente", Tags na lista): uma linha, com reticências se não couber. As Tags do editor também cortam com reticências, com o nome inteiro no `title`.
+     - As faixas abaixo do cabeçalho (removido, mudou no disco, Análise em andamento, Diretrizes vazias) usam o padding do cabeçalho (`px-4 md:px-6`), e os cabeçalhos das gavetas (Versões, Análise) usam `px-4`.
+     - Sem Versões, a gaveta mostra o estado vazio "Ainda não há Versões" (com ícone) no lugar de "Escolha uma Versão", e a lista some.
+     - O botão de fechar o aviso (toast) virou `botao-icone` de 28 px, um alvo de toque maior.
+     - O Favorito na lista ganhou nome acessível ("Favorito"), como o indicador de Análise.

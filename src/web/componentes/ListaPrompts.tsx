@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { useAnalisesAbertas } from '../dados/analise';
 import { mensagemDeErro } from '../dados/cliente';
 import { filtrosDe, usePrompts } from '../dados/consultas';
 import { abrirPrompt, buscarTexto, useNavegacao, type Navegacao } from '../navegacao';
-import { SEM_COLECAO, TECLA_MOD } from '../textos';
+import { ANALISE_EM_ANDAMENTO, SEM_COLECAO, TECLA_MOD } from '../textos';
 import { EstadoVazio } from './EstadoVazio';
 import { Icone } from './Icone';
 
@@ -35,6 +36,7 @@ export function ListaPrompts({ onAbrirMenu }: { onAbrirMenu: () => void }) {
   }, [texto, nav.q]);
 
   const consulta = usePrompts(filtrosDe(nav));
+  const abertas = new Set(useAnalisesAbertas().data);
   const prompts = consulta.data?.prompts ?? [];
   const problemas = consulta.data?.problemas ?? [];
   const semFiltro = !nav.q && !nav.tag && !nav.favoritos && nav.colecao === undefined;
@@ -158,18 +160,31 @@ export function ListaPrompts({ onAbrirMenu }: { onAbrirMenu: () => void }) {
                       <span className="min-w-0 flex-1 truncate text-sm font-medium">
                         {p.titulo}
                       </span>
+                      {abertas.has(p.id) && (
+                        <span
+                          role="img"
+                          title={ANALISE_EM_ANDAMENTO}
+                          aria-label={ANALISE_EM_ANDAMENTO}
+                          className="mt-0.5 shrink-0 text-terracota"
+                        >
+                          <Icone nome="faisca" className="size-3.5" />
+                        </span>
+                      )}
                       {p.favorito && (
-                        <Icone
-                          nome="estrela"
-                          preenchido
-                          className="mt-0.5 size-3.5 shrink-0 text-terracota"
-                        />
+                        <span
+                          role="img"
+                          title="Favorito"
+                          aria-label="Favorito"
+                          className="mt-0.5 shrink-0 text-terracota"
+                        >
+                          <Icone nome="estrela" preenchido className="size-3.5" />
+                        </span>
                       )}
                     </span>
-                    <span className="flex w-full flex-wrap items-center gap-x-2 gap-y-1 text-xs text-suave">
-                      <span className="truncate">{p.colecao ?? SEM_COLECAO}</span>
+                    <span className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-suave">
+                      <span className="max-w-full truncate">{p.colecao ?? SEM_COLECAO}</span>
                       {p.tags.map((t) => (
-                        <span key={t} className="rounded-full bg-realce px-1.5 py-px">
+                        <span key={t} className="selo max-w-40 bg-realce" title={t}>
                           {t}
                         </span>
                       ))}

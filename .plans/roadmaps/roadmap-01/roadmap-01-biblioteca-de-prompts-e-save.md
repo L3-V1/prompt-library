@@ -1,10 +1,11 @@
 ---
 titulo: Roadmap da Biblioteca de Prompts e do comando /save
 data: 2026-11-04
-status: aprovado
+status: implementado
 tipo: roadmap
 numero: "01"
 triagem: ok
+encerrado_em: 2026-11-05
 ---
 
 # Roadmap: Biblioteca de Prompts + comando `/save`

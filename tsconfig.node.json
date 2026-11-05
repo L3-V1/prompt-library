@@ -10,5 +10,12 @@
     "outDir": "dist/.tsc/node",
     "tsBuildInfoFile": "dist/.tsc/node.tsbuildinfo"
   },
-  "include": ["src/core", "src/server", "skills", "*.config.ts"]
+  "include": [
+    "src/core",
+    "src/server",
+    "skills",
+    "scripts/**/*.ts",
+    "scripts/**/*.d.mts",
+    "*.config.ts"
+  ]
 }

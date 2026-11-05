@@ -321,8 +321,14 @@ export function criarServicoAnalise(deps: DepsServicoAnalise) {
     jobs.clear();
   }
 
+  /** Os ids dos Prompts com Análise aberta (indicador na lista). */
+  function listarAbertas(): Promise<string[]> {
+    return armazenamento.listar();
+  }
+
   return {
     ler,
+    listarAbertas,
     iniciar,
     regenerar,
     regenerarSugestao,

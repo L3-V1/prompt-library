@@ -107,16 +107,20 @@
 
 @layer components {
   .botao {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-borda bg-elevada px-3 py-1.5 text-sm font-medium text-texto transition-colors hover:bg-realce disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-borda bg-elevada px-3 whitespace-nowrap py-1.5 text-sm font-medium text-texto transition-colors hover:bg-realce disabled:cursor-not-allowed disabled:opacity-50;
   }
   .botao-primario {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-destaque px-3 py-1.5 text-sm font-semibold text-sobre-destaque transition-colors hover:bg-destaque-hover disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-destaque px-3 whitespace-nowrap py-1.5 text-sm font-semibold text-sobre-destaque transition-colors hover:bg-destaque-hover disabled:cursor-not-allowed disabled:opacity-50;
   }
   .botao-perigo {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-perigo px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:opacity-90 dark:text-superficie;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-perigo px-3 py-1.5 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 dark:text-superficie;
   }
   .botao-icone {
     @apply inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-suave transition-colors hover:bg-realce hover:text-texto disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  /* Selo/chip curto (status, Tag): uma linha, cortado com reticências se não couber. */
+  .selo {
+    @apply inline-block max-w-full truncate rounded-full px-1.5 py-px align-middle whitespace-nowrap;
   }
   .campo {
     @apply w-full rounded-lg border border-borda bg-elevada px-3 py-1.5 text-sm text-texto placeholder:text-suave focus:border-terracota focus:outline-none;
