@@ -1,18 +1,29 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type DragEvent, type ReactNode } from 'react';
 
-import { mensagemDeErro } from '../dados/cliente';
-import { criarColecao, renomearColecao, useColecoes, useTags } from '../dados/consultas';
+import { mensagemDeErro, type PreviaExclusao } from '../dados/cliente';
+import {
+  criarColecao,
+  excluirColecao,
+  previaExclusaoColecao,
+  renomearColecao,
+  useColecoes,
+  useTags,
+} from '../dados/consultas';
+import { arrastado, MIME_PROMPT, moverParaColecao } from '../mover';
 import {
   abrirDiretrizes,
   comFiltro,
   filtrar,
+  navegacaoAtual,
   navegar,
   semPrompt,
   useNavegacao,
   type Filtro,
 } from '../navegacao';
-import { SEM_COLECAO } from '../textos';
+import { SEM_COLECAO, textoExclusaoColecao } from '../textos';
 import { definirPreferencia, usePreferenciaTema, type PreferenciaTema } from '../tema';
+import { Confirmacao } from './Confirmacao';
+import { Dialogo } from './Dialogo';
 import { Icone, type NomeIcone } from './Icone';
 import { toast } from './Toaster';
 
@@ -22,6 +33,7 @@ function Item({
   total,
   ativo,
   onClick,
+  soltar,
   children,
 }: {
   icone?: NomeIcone;
@@ -29,17 +41,57 @@ function Item({
   total?: number | undefined;
   ativo: boolean;
   onClick: () => void;
+  /** Coleção de destino ao soltar um Prompt aqui (`null` = "Sem coleção"); sem ela, não aceita. */
+  soltar?: string | null;
   children?: ReactNode;
 }) {
+  const [alvo, setAlvo] = useState(false);
+  const aceita = (e: DragEvent) =>
+    soltar !== undefined &&
+    e.dataTransfer.types.includes(MIME_PROMPT) &&
+    arrastado()?.colecao !== soltar;
+
+  // Arrasto cancelado (Esc, soltar fora): nem sempre vem um `dragleave` neste item.
+  useEffect(() => {
+    if (!alvo) return;
+    const limpar = () => setAlvo(false);
+    document.addEventListener('dragend', limpar);
+    document.addEventListener('drop', limpar);
+    return () => {
+      document.removeEventListener('dragend', limpar);
+      document.removeEventListener('drop', limpar);
+    };
+  }, [alvo]);
+
   return (
-    <li className="group relative">
+    <li
+      className="group relative"
+      onDragEnter={(e) => {
+        if (aceita(e)) setAlvo(true);
+      }}
+      onDragOver={(e) => {
+        if (!aceita(e)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setAlvo(false);
+      }}
+      onDrop={(e) => {
+        setAlvo(false);
+        const id = e.dataTransfer.getData(MIME_PROMPT);
+        if (!aceita(e) || !id || soltar === undefined) return;
+        e.preventDefault();
+        void moverParaColecao(id, soltar);
+      }}
+    >
       <button
         type="button"
         aria-current={ativo}
         onClick={onClick}
         className={`item item-nav flex w-full items-center gap-2.5 text-left text-sm ${
           ativo ? 'font-medium text-texto' : 'text-texto/85'
-        }`}
+        } ${alvo ? 'item-alvo' : ''}`}
       >
         {icone && (
           <Icone
@@ -148,6 +200,7 @@ export function Navegacao({
   const tema = usePreferenciaTema();
   const [criando, setCriando] = useState(false);
   const [renomeando, setRenomeando] = useState<string | null>(null);
+  const [excluindo, setExcluindo] = useState<{ nome: string; previa: PreviaExclusao } | null>(null);
 
   const listaColecoes = colecoes.data ?? [];
   const totalSem = listaColecoes.find((c) => c.nome === null)?.total;
@@ -164,6 +217,25 @@ export function Navegacao({
     }
     onEscolher();
   };
+
+  async function pedirExclusao(nome: string) {
+    try {
+      setExcluindo({ nome, previa: await previaExclusaoColecao(nome) });
+    } catch (e) {
+      toast.erro(mensagemDeErro(e));
+    }
+  }
+
+  async function confirmarExclusao(nome: string) {
+    setExcluindo(null);
+    try {
+      await excluirColecao(nome);
+      if (navegacaoAtual().colecao === nome) filtrar({});
+      toast.sucesso(`Coleção "${nome}" excluída`);
+    } catch (e) {
+      toast.erro(mensagemDeErro(e));
+    }
+  }
 
   return (
     <nav aria-label="Coleções e Tags" className="flex h-full min-h-0 flex-col">
@@ -194,6 +266,7 @@ export function Navegacao({
             total={totalSem}
             ativo={emPrompts && nav.colecao === null}
             onClick={() => escolher({ colecao: null })}
+            soltar={null}
           />
         </ul>
 
@@ -248,16 +321,28 @@ export function Navegacao({
                 total={c.total}
                 ativo={emPrompts && nav.colecao === c.nome}
                 onClick={() => escolher({ colecao: c.nome })}
+                soltar={c.nome}
               >
-                <button
-                  type="button"
-                  className="botao-icone absolute top-1/2 right-1 size-6 -translate-y-1/2 bg-elevada opacity-0 group-focus-within:opacity-100 group-hover:opacity-100"
-                  aria-label={`Renomear a Coleção ${c.nome}`}
-                  title="Renomear"
-                  onClick={() => setRenomeando(c.nome)}
-                >
-                  <Icone nome="lapis" className="size-3.5" />
-                </button>
+                <div className="absolute top-1/2 right-1 flex -translate-y-1/2 gap-0.5 rounded-lg bg-elevada opacity-0 group-focus-within:opacity-100 group-hover:opacity-100">
+                  <button
+                    type="button"
+                    className="botao-icone size-6"
+                    aria-label={`Renomear a Coleção ${c.nome}`}
+                    title="Renomear"
+                    onClick={() => setRenomeando(c.nome)}
+                  >
+                    <Icone nome="lapis" className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    className="botao-icone size-6 hover:text-perigo"
+                    aria-label={`Excluir a Coleção ${c.nome}`}
+                    title="Excluir"
+                    onClick={() => void pedirExclusao(c.nome as string)}
+                  >
+                    <Icone nome="lixeira" className="size-3.5" />
+                  </button>
+                </div>
               </Item>
             ),
           )}
@@ -268,6 +353,44 @@ export function Navegacao({
             <li className="px-2.5 py-1 text-xs text-perigo">{mensagemDeErro(colecoes.error)}</li>
           )}
         </ul>
+
+        <Dialogo
+          aberto={excluindo !== null && excluindo.previa.conflitos.length > 0}
+          onFechar={() => setExcluindo(null)}
+          titulo="Não é possível excluir a Coleção"
+        >
+          <div className="corpo-modal flex flex-col gap-3 text-sm text-suave">
+            <p>
+              Ao excluir a Coleção &ldquo;{excluindo?.nome}&rdquo;, os Prompts dela vão para{' '}
+              {SEM_COLECAO}. Estes ficariam com o mesmo nome de arquivo de outro Prompt:
+            </p>
+            <ul className="list-disc pl-5 text-texto">
+              {excluindo?.previa.conflitos.map((t, i) => (
+                <li key={`${t}-${i}`}>{t}</li>
+              ))}
+            </ul>
+            <p>Renomeie-os e tente de novo.</p>
+          </div>
+          <div className="rodape-modal">
+            <button
+              type="button"
+              className="botao-primario"
+              onClick={() => setExcluindo(null)}
+              data-autofocus
+            >
+              Entendi
+            </button>
+          </div>
+        </Dialogo>
+        <Confirmacao
+          aberto={excluindo !== null && excluindo.previa.conflitos.length === 0}
+          titulo={`Excluir a Coleção "${excluindo?.nome ?? ''}"?`}
+          rotuloConfirmar="Excluir Coleção"
+          onCancelar={() => setExcluindo(null)}
+          onConfirmar={() => excluindo && void confirmarExclusao(excluindo.nome)}
+        >
+          {excluindo && textoExclusaoColecao(excluindo.previa)}
+        </Confirmacao>
 
         <h2 className="rotulo-secao mt-6 mb-1.5 px-2.5">Tags</h2>
         <ul className="flex flex-col gap-0.5">

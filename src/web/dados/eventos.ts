@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import type { QueryKey } from '@tanstack/react-query';
 
 import { guardarAnalise, type AnaliseOuNada } from './analise';
-import type { Mudancas } from './cliente';
+import type { Mudancas, Prompt } from './cliente';
 import { chaves, clienteConsultas } from './consultas';
 
 /** Eventos do SSE em `/api/eventos` (decisão 68), sem o `ping`. */
@@ -26,8 +26,12 @@ export function chavesParaInvalidar(evento: EventoServidor): QueryKey[] {
   return chavesAcervo;
 }
 
-/** `reconectado`: o SSE caiu e voltou, e eventos podem ter se perdido. */
-export type EventoLocal = EventoServidor | { tipo: 'reconectado' };
+/**
+ * `reconectado`: o SSE caiu e voltou, e eventos podem ter se perdido. `gravado`: esta aba
+ * gravou o Prompt fora do painel dele (ao soltar na Coleção), com o estado novo já em mãos.
+ */
+export type EventoLocal =
+  EventoServidor | { tipo: 'reconectado' } | { tipo: 'gravado'; dados: Prompt };
 
 type Ouvinte = (evento: EventoLocal) => void;
 const ouvintes = new Set<Ouvinte>();
@@ -36,6 +40,11 @@ const ouvintes = new Set<Ouvinte>();
 export function ouvirEventos(ouvinte: Ouvinte): () => void {
   ouvintes.add(ouvinte);
   return () => ouvintes.delete(ouvinte);
+}
+
+/** Avisa os ouvintes que esta aba gravou o Prompt (o painel aberto troca a base na hora). */
+export function avisarGravado(prompt: Prompt): void {
+  for (const ouvinte of ouvintes) ouvinte({ tipo: 'gravado', dados: prompt });
 }
 
 /** Aplica um evento do servidor ao cache e avisa os ouvintes. */

@@ -295,6 +295,37 @@ describe('coleções e tags', () => {
     expect(inexistente.status).toBe(404);
   });
 
+  it('prévia e exclusão de Coleção', async () => {
+    const { vault, pedir } = await montar({
+      'Prompts/z.md': '---\nid: z0\ntitulo: Z raiz\n---\n',
+      'Prompts/A/z.md': '---\nid: z1\ntitulo: Z da A\n---\n',
+      'Prompts/A/x.md': '---\nid: x\n---\n',
+      'Prompts/A/foto.png': 'png',
+      'Prompts/B/y.md': '---\nid: y\n---\n',
+    });
+    const previa = await pedir('/api/colecoes/A/exclusao');
+    expect(await previa.json()).toEqual({ prompts: 2, outros: 1, conflitos: ['Z da A'] });
+
+    const barrada = await pedir('/api/colecoes/A', { method: 'DELETE' });
+    expect(barrada.status).toBe(409);
+    const corpo = (await barrada.json()) as { codigo: string; titulos: string[]; erro: string };
+    expect(corpo.codigo).toBe('colecao_com_conflitos');
+    expect(corpo.titulos).toEqual(['Z da A']);
+    expect(corpo.erro).toContain('"Z da A"');
+
+    const excluida = await pedir('/api/colecoes/B', { method: 'DELETE' });
+    expect(excluida.status).toBe(200);
+    expect(await excluida.json()).toEqual({ prompts: 1, outros: 0 });
+    expect(await vault.existe('Prompts/y.md')).toBe(true);
+    expect(await (await pedir('/api/colecoes')).json()).toEqual([
+      { nome: null, total: 2 },
+      { nome: 'A', total: 2 },
+    ]);
+
+    expect((await pedir('/api/colecoes/Nada', { method: 'DELETE' })).status).toBe(404);
+    expect((await pedir('/api/colecoes/Nada/exclusao')).status).toBe(404);
+  });
+
   it('GET /api/tags', async () => {
     const { pedir } = await montar({
       'Prompts/A.md': PROMPT_A,

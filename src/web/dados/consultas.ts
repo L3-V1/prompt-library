@@ -3,7 +3,15 @@ import { QueryClient, useQuery, type QueryKey } from '@tanstack/react-query';
 import type { ConteudoPrompt } from '../edicao';
 import type { Navegacao } from '../navegacao';
 import { api, ErroApi, pedir, pedirTexto, type Prompt } from './cliente';
-import type { Change, EstadoDiretrizes, Listagem, TotalColecao, TotalTag, Versao } from './cliente';
+import type {
+  Change,
+  EstadoDiretrizes,
+  Listagem,
+  PreviaExclusao,
+  TotalColecao,
+  TotalTag,
+  Versao,
+} from './cliente';
 
 /** Os filtros da lista a partir da navegação. */
 export function filtrosDe(nav: Navegacao): FiltrosLista {
@@ -202,6 +210,16 @@ export async function renomearColecao(nome: string, novoNome: string): Promise<s
   const res = await pedir(api.api.colecoes[':nome'].$put({ param: { nome }, json: { novoNome } }));
   await clienteConsultas.invalidateQueries({ queryKey: chaves.colecoes });
   return res.nome;
+}
+
+export const previaExclusaoColecao = (nome: string): Promise<PreviaExclusao> =>
+  pedir(api.api.colecoes[':nome'].exclusao.$get({ param: { nome } }));
+
+/** Exclui a Coleção (decisão 123). Com conflitos, lança o 409 com os títulos na mensagem. */
+export async function excluirColecao(nome: string): Promise<{ prompts: number; outros: number }> {
+  const res = await pedir(api.api.colecoes[':nome'].$delete({ param: { nome } }));
+  await clienteConsultas.invalidateQueries({ queryKey: chaves.colecoes });
+  return res;
 }
 
 export async function salvarDiretrizes(

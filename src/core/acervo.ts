@@ -6,6 +6,7 @@ import { diffLines, type Change } from 'diff';
 
 import { caminhoLivre, gravarAtomico, hashDe, limparNome, nomeSeguro } from './arquivos.js';
 import {
+  ColecaoComConflitosError,
   ColecaoInvalidaError,
   ColecaoJaExisteError,
   ColecaoNaoEncontradaError,
@@ -27,6 +28,7 @@ import type {
   MotivoVersao,
   Origem,
   Pastas,
+  PreviaExclusao,
   Problema,
   Prompt,
   ResultadoListagem,
@@ -405,6 +407,90 @@ export function criarAcervo(pastas: Pastas) {
     return limpo;
   }
 
+  /** Quantos arquivos sob `dir` não são Prompts (decisão 123). */
+  async function contarOutros(dir: string, dentroDeOculto = false): Promise<number> {
+    let total = 0;
+    for (const e of await fs.readdir(dir, { withFileTypes: true })) {
+      const oculto = dentroDeOculto || ehOculto(e.name);
+      if (e.isDirectory()) total += await contarOutros(path.join(dir, e.name), oculto);
+      else if (oculto || !e.isFile() || !e.name.endsWith('.md')) total++;
+    }
+    return total;
+  }
+
+  /** Remove as pastas vazias sob `dir`, de baixo para cima; `dir` fica. */
+  async function podarVazias(dir: string): Promise<void> {
+    for (const e of await fs.readdir(dir, { withFileTypes: true })) {
+      if (!e.isDirectory()) continue;
+      const sub = path.join(dir, e.name);
+      await podarVazias(sub);
+      if ((await fs.readdir(sub)).length === 0) await fs.rmdir(sub);
+    }
+  }
+
+  async function existe(caminho: string): Promise<boolean> {
+    try {
+      await fs.access(caminho);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /** O que a exclusão da Coleção faria: os `.md`, a contagem dos outros e os conflitos. */
+  async function planoExclusao(nome: string) {
+    if (!(await listarColecoes()).includes(nome)) throw new ColecaoNaoEncontradaError(nome);
+    const dir = path.join(pastas.prompts, nome);
+    const mds: string[] = [];
+    for await (const absoluto of arquivosMd(dir)) mds.push(absoluto);
+
+    const { entradas } = await varrer();
+    const titulos = new Map(
+      entradas.filter((e) => e.prompt.colecao === nome).map((e) => [e.absoluto, e.prompt.titulo]),
+    );
+    const tituloDe = (absoluto: string) => titulos.get(absoluto) ?? path.basename(absoluto, '.md');
+
+    // Decisão 124: o nome de destino já existe na raiz ou se repete entre subpastas.
+    const porNome = new Map<string, string[]>();
+    for (const absoluto of mds) {
+      const base = path.basename(absoluto);
+      porNome.set(base, [...(porNome.get(base) ?? []), absoluto]);
+    }
+    const conflitos: string[] = [];
+    for (const [base, grupo] of porNome) {
+      if (grupo.length > 1 || (await existe(path.join(pastas.prompts, base)))) {
+        conflitos.push(...grupo.map(tituloDe));
+      }
+    }
+
+    return { dir, mds, outros: await contarOutros(dir), conflitos };
+  }
+
+  async function previaExclusaoColecao(nome: string): Promise<PreviaExclusao> {
+    const { mds, outros, conflitos } = await planoExclusao(nome);
+    return { prompts: mds.length, outros, conflitos };
+  }
+
+  /**
+   * Exclui a Coleção (decisões 123 e 124): os `.md` vão para a raiz de `Prompts/` com o mesmo
+   * nome; se sobrar algo, a pasta vai inteira para `.trash/`. Com conflitos, nada se move.
+   */
+  async function excluirColecao(nome: string): Promise<{ prompts: number; outros: number }> {
+    const { dir, mds, outros, conflitos } = await planoExclusao(nome);
+    if (conflitos.length > 0) throw new ColecaoComConflitosError(nome, conflitos);
+    for (const absoluto of mds) {
+      await fs.rename(absoluto, path.join(pastas.prompts, path.basename(absoluto)));
+    }
+    await podarVazias(dir);
+    if ((await fs.readdir(dir)).length === 0) {
+      await fs.rmdir(dir);
+    } else {
+      await fs.mkdir(pastas.lixeira, { recursive: true });
+      await fs.rename(dir, await caminhoLivre(pastas.lixeira, nome, ''));
+    }
+    return { prompts: mds.length, outros };
+  }
+
   // --- Versões (decisões 7 e 8) ---
 
   function listarVersoes(id: string): Promise<Versao[]> {
@@ -461,6 +547,8 @@ export function criarAcervo(pastas: Pastas) {
     listarColecoes,
     criarColecao,
     renomearColecao,
+    previaExclusaoColecao,
+    excluirColecao,
     listarVersoes,
     lerVersao,
     diff,

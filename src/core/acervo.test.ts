@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { criarAcervo } from './acervo.js';
 import {
+  ColecaoComConflitosError,
   ColecaoInvalidaError,
   ColecaoJaExisteError,
   ColecaoNaoEncontradaError,
@@ -303,5 +304,102 @@ describe('Coleções', () => {
     await expect(acervo.criar({ titulo: 't', corpo: '', colecao: '_x' })).rejects.toThrow(
       ColecaoInvalidaError,
     );
+  });
+});
+
+describe('excluirColecao', () => {
+  const md = (id: string, titulo = id) => `---\nid: ${id}\ntitulo: ${titulo}\n---\nCorpo ${id}\n`;
+
+  it('leva os .md para a raiz e o resto para a lixeira, dentro da pasta', async () => {
+    const { vault, acervo } = await montar({
+      'Prompts/A/a.md': md('a'),
+      'Prompts/A/sub/b.md': md('b'),
+      'Prompts/A/img.png': 'png',
+      'Prompts/A/sub/c.pdf': 'pdf',
+      'Prompts/A/_rascunho.md': 'r',
+      'Prompts/A/vazia/.keep': '',
+    });
+    expect(await acervo.previaExclusaoColecao('A')).toEqual({
+      prompts: 2,
+      outros: 4,
+      conflitos: [],
+    });
+    expect(await acervo.excluirColecao('A')).toEqual({ prompts: 2, outros: 4 });
+
+    expect(await vault.existe('Prompts/A')).toBe(false);
+    expect((await acervo.ler('a')).caminho).toBe('a.md');
+    expect((await acervo.ler('b')).caminho).toBe('b.md');
+    expect(await vault.arquivos('.trash/A')).toEqual([
+      '_rascunho.md',
+      'img.png',
+      'sub/c.pdf',
+      'vazia/.keep',
+    ]);
+    expect(await acervo.listarColecoes()).toEqual([]);
+  });
+
+  it('apaga a pasta quando só há .md, sem tocar na lixeira', async () => {
+    const { vault, acervo } = await montar({
+      'Prompts/A/a.md': md('a'),
+      'Prompts/A/sub/b.md': md('b'),
+    });
+    await vault.escrever('Prompts/A/outra/.gitkeep', '');
+    await fs.rm(vault.caminho('Prompts/A/outra/.gitkeep'));
+    expect(await acervo.excluirColecao('A')).toEqual({ prompts: 2, outros: 0 });
+    expect(await vault.existe('Prompts/A')).toBe(false);
+    expect(await vault.existe('.trash')).toBe(false);
+    expect(await vault.arquivos('Prompts')).toEqual(['a.md', 'b.md']);
+  });
+
+  it('não move nada quando há conflito com a raiz ou entre subpastas', async () => {
+    const arquivos = {
+      'Prompts/z.md': md('z0', 'Z da raiz'),
+      'Prompts/A/z.md': md('z1', 'Z da Coleção'),
+      'Prompts/A/x/d.md': md('d1', 'D um'),
+      'Prompts/A/y/d.md': md('d2', 'D dois'),
+      'Prompts/A/ok.md': md('ok'),
+    };
+    const { vault, acervo } = await montar(arquivos);
+    const antes = await vault.arquivos();
+    const conflitos = ['D um', 'D dois', 'Z da Coleção'];
+
+    expect((await acervo.previaExclusaoColecao('A')).conflitos.sort()).toEqual(
+      [...conflitos].sort(),
+    );
+    const erro = await acervo.excluirColecao('A').catch((e: unknown) => e);
+    expect(erro).toBeInstanceOf(ColecaoComConflitosError);
+    expect((erro as ColecaoComConflitosError).titulos.sort()).toEqual([...conflitos].sort());
+    expect((erro as Error).message).toContain('"Z da Coleção"');
+    expect(await vault.arquivos()).toEqual(antes);
+  });
+
+  it('usa um nome livre na lixeira', async () => {
+    const { vault, acervo } = await montar({
+      '.trash/A/velho.txt': 'v',
+      'Prompts/A/img.png': 'png',
+    });
+    expect(await acervo.excluirColecao('A')).toEqual({ prompts: 0, outros: 1 });
+    expect(await vault.existe('.trash/A 2/img.png')).toBe(true);
+    expect(await vault.existe('.trash/A/velho.txt')).toBe(true);
+  });
+
+  it('Coleção vazia: prévia zerada e a pasta some', async () => {
+    const { vault, acervo } = await montar();
+    await acervo.criarColecao('Vazia');
+    expect(await acervo.previaExclusaoColecao('Vazia')).toEqual({
+      prompts: 0,
+      outros: 0,
+      conflitos: [],
+    });
+    await acervo.excluirColecao('Vazia');
+    expect(await vault.existe('Prompts/Vazia')).toBe(false);
+  });
+
+  it('rejeita Coleção inexistente, oculta ou fora de Prompts/', async () => {
+    const { acervo } = await montar({ 'Prompts/A/a.md': md('a'), 'Prompts/_x/b.md': '' });
+    for (const nome of ['Nada', '../A', '_x', '.', '']) {
+      await expect(acervo.excluirColecao(nome)).rejects.toThrow(ColecaoNaoEncontradaError);
+      await expect(acervo.previaExclusaoColecao(nome)).rejects.toThrow(ColecaoNaoEncontradaError);
+    }
   });
 });

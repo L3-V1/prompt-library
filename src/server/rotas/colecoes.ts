@@ -16,5 +16,13 @@ export function rotasColecoes({ acervo, indice }: Deps) {
       const nome = await acervo.renomearColecao(c.req.param('nome'), c.req.valid('json').novoNome);
       await indice.atualizar();
       return c.json({ nome });
+    })
+    .get('/:nome/exclusao', async (c) =>
+      c.json(await acervo.previaExclusaoColecao(c.req.param('nome'))),
+    )
+    .delete('/:nome', async (c) => {
+      const resultado = await acervo.excluirColecao(c.req.param('nome'));
+      await indice.atualizar();
+      return c.json(resultado);
     });
 }

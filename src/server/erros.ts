@@ -7,6 +7,7 @@ import { z } from 'zod';
 import {
   AnaliseInvalidaError,
   AnaliseNaoEncontradaError,
+  ColecaoComConflitosError,
   ColecaoInvalidaError,
   ColecaoJaExisteError,
   ColecaoNaoEncontradaError,
@@ -34,6 +35,12 @@ export interface CorpoConflito extends CorpoErro {
   atual: Prompt | EstadoDiretrizes;
   diff: Change[];
 }
+
+/** Corpo do 409 da exclusão de Coleção com conflitos (decisão 124). */
+export type CorpoColecaoComConflitos = CorpoErro & {
+  codigo: 'colecao_com_conflitos';
+  titulos: string[];
+};
 
 /** Erro com status e código próprios, lançado pelas rotas e middlewares. */
 export class ErroHttp extends Error {
@@ -114,6 +121,14 @@ export const tratarErro: ErrorHandler = (erro, c) => {
   }
   if (erro instanceof ColecaoJaExisteError) {
     return resposta(c, 409, 'colecao_ja_existe', erro.message);
+  }
+  if (erro instanceof ColecaoComConflitosError) {
+    const corpo: CorpoColecaoComConflitos = {
+      erro: erro.message,
+      codigo: 'colecao_com_conflitos',
+      titulos: erro.titulos,
+    };
+    return c.json(corpo, 409);
   }
   if (erro instanceof AnaliseNaoEncontradaError) {
     return resposta(c, 404, 'analise_nao_encontrada', erro.message);
