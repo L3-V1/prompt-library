@@ -1,11 +1,13 @@
 ---
 titulo: "M5: Análise (Aprimoramento assistido)"
 data: 2026-11-04
-status: aprovado
+status: implementado
 tipo: milestone
 numero: "05"
 pai: roadmaps/roadmap-01
 triagem: ok
+branch: feat/milestone-05-analise
+encerrado_em: 2026-11-05
 ---
 
 # M5: Análise (Aprimoramento assistido)
@@ -219,3 +221,15 @@ Usam o `id()` existente de `src/core/ids.ts`.
 3. Conferir no `ps` que o processo `claude` morre ao Cancelar.
 4. `npm run build && npm start` → o mesmo fluxo em `http://127.0.0.1:5174`.
 5. Commit na branch `feat/milestone-05-analise` só quando você pedir.
+
+## Encerramento das pendências
+
+Decidido em 2026-11-05, no encerramento da etapa.
+
+| Pendência | Origem | Destino | Motivo |
+|---|---|---|---|
+| Progresso com `stream-json` | Fora do escopo | Plano avulso | Com gerações de 2 a 10 s, a fase basta; melhoria pós-MVP |
+| Indicador na lista de Prompts com Análise aberta | Fora do escopo | Próxima etapa | Pequeno e combina com a revisão de UI do M6 |
+| Análise de título e Tags | Fora do escopo | Descartar | Ganho pequeno diante da mudança no modelo; a decisão 88 fica |
+| Mais de uma Análise por Prompt | Fora do escopo | Descartar | Uma por Prompt mantém o modelo simples; regenerar cobre a necessidade |
+| `npm start` como serviço, README e `.gitignore` do vault | Fora do escopo | Próxima etapa | Já é o escopo do M6: Acabamento |
