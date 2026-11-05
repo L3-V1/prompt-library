@@ -52,6 +52,19 @@ export class ColecaoNaoEncontradaError extends Error {
   }
 }
 
+/** Excluir a Coleção levaria Prompts para nomes de arquivo já ocupados (decisão 124). */
+export class ColecaoComConflitosError extends Error {
+  override name = 'ColecaoComConflitosError';
+  constructor(
+    readonly nome: string,
+    readonly titulos: string[],
+  ) {
+    super(
+      `Não é possível excluir a Coleção "${nome}": já existem em Sem coleção Prompts com o mesmo nome de arquivo: ${titulos.map((t) => `"${t}"`).join(', ')}. Renomeie-os e tente de novo.`,
+    );
+  }
+}
+
 /** Frontmatter com YAML inválido ou que não é um mapa. */
 export class FrontmatterInvalidoError extends Error {
   override name = 'FrontmatterInvalidoError';

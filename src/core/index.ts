@@ -15,6 +15,7 @@ export { criarDiretrizes, type Diretrizes } from './diretrizes.js';
 export {
   AnaliseInvalidaError,
   AnaliseNaoEncontradaError,
+  ColecaoComConflitosError,
   ColecaoInvalidaError,
   ColecaoJaExisteError,
   ColecaoNaoEncontradaError,
@@ -37,6 +38,7 @@ export {
   type MotivoVersao,
   type Origem,
   type Pastas,
+  type PreviaExclusao,
   type Problema,
   type Prompt,
   type ResultadoListagem,

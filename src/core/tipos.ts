@@ -60,6 +60,16 @@ export interface ResultadoListagem {
   problemas: Problema[];
 }
 
+/** O que acontece ao excluir uma Coleção (decisões 122 a 124). */
+export interface PreviaExclusao {
+  /** `.md` que vão para "Sem coleção". */
+  prompts: number;
+  /** Os outros arquivos, que vão para a lixeira dentro da pasta da Coleção. */
+  outros: number;
+  /** Títulos dos Prompts cujo nome de arquivo já estaria ocupado na raiz. */
+  conflitos: string[];
+}
+
 export interface Pastas {
   vault: string;
   prompts: string;
