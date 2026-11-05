@@ -4,7 +4,7 @@ Aplicação pessoal, local, para guardar, aprimorar e copiar os prompts usados n
 
 Três partes:
 
-- **Biblioteca:** a interface web em `http://127.0.0.1:5174`, com Coleções, Tags, Favoritos, busca, editor Markdown, Versões com diff e a paleta **Ctrl+K** (busca e copia de qualquer lugar).
+- **Biblioteca:** a interface web em `http://127.0.0.1:5174`, com Coleções, Tags, Favoritos, busca, editor Markdown, Versões com diff e a paleta **Ctrl+K** (busca e copia de qualquer lugar). Ao copiar um Prompt com Variáveis `{{nome}}`, um formulário pede os valores (e lembra os da última cópia).
 - **Captura:** o comando `/save` do Claude Code registra na biblioteca, exatamente como foi escrito, um prompt digitado na conversa. Gera um Prompt novo ou uma Versão nova de um parecido.
 - **Análise:** o Claude examina um Prompt à luz das suas **Diretrizes** e de uma **Instrução** opcional e propõe **Sugestões** pontuais; você aceita, rejeita ou regenera cada uma, edita o **Rascunho** à vontade e, ao concluir, o Prompt ganha uma única Versão (ADR 0002).
 
