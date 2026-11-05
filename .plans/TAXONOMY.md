@@ -12,6 +12,7 @@ Mantido pela skill plan-triage. Pode ser editado à mão: a skill lê este arqui
 ## Hierarquias
 
 - `roadmaps/roadmap-01`, Biblioteca de Prompts e comando /save: roadmap > milestone
+- `roadmaps/roadmap-02`, Melhorias pós-MVP da Biblioteca de Prompts: roadmap > milestone
 
 ## Categorias de avulsos
 
@@ -37,3 +38,8 @@ features, fixes, refactors, spikes, docs, chores
         - [M5: Análise (Aprimoramento assistido)](roadmaps/roadmap-01/milestones/milestone-05/milestone-05-analise-aprimoramento-assistido.md)
       - **milestone-06/**
         - [M6: Acabamento](roadmaps/roadmap-01/milestones/milestone-06/milestone-06-acabamento.md)
+  - **roadmap-02/**
+    - [Roadmap: melhorias pós-MVP da Biblioteca de Prompts](roadmaps/roadmap-02/roadmap-02-melhorias-pos-mvp.md)
+    - **milestones/**
+      - **milestone-00/**
+        - [roadmap-02, M0: comando prompt-library](roadmaps/roadmap-02/milestones/milestone-00/milestone-00-comando-prompt-library.md)

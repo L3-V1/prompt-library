@@ -380,3 +380,57 @@ Registro cronológico das decisões tomadas no projeto. Seções mais recentes n
      - Sem Versões, a gaveta mostra o estado vazio "Ainda não há Versões" (com ícone) no lugar de "Escolha uma Versão", e a lista some.
      - O botão de fechar o aviso (toast) virou `botao-icone` de 28 px, um alvo de toque maior.
      - O Favorito na lista ganhou nome acessível ("Favorito"), como o indicador de Análise.
+
+## 2026-11-05: Escopo dos planos avulsos pós-MVP
+
+### Decisões
+
+107. **As pendências que ficaram para planos avulsos viram planos separados em `.plans/`, um por assunto, implementados nesta ordem: comando `prompt-library`, Coleções, Variáveis, progresso com `stream-json`.**
+     - Por quê: os assuntos não dependem um do outro, e cada um ganha branch e encerramento próprios. O comando vem primeiro por ser o menor, e as Coleções em seguida porque são o menor dos outros três e o mais usado no dia a dia. O `stream-json` fica por último porque é o menos urgente.
+     - Descartadas: dois planos (Coleções e `stream-json` juntos); um plano único; não fixar ordem; Variáveis antes das Coleções.
+
+108. **Um comando de terminal `prompt-library` abre o app (`http://127.0.0.1:5174`) no navegador com `xdg-open`.** Está fora das pendências do M6 e foi incluído nesta conversa, num plano próprio.
+     - Por quê: abrir o app sem precisar lembrar a URL.
+     - Descartados: os nomes `prompts` e `biblioteca`; incluir o comando no plano das Coleções; deixá-lo para o fim.
+
+109. **Se o app não responder, o comando `prompt-library` roda `systemctl --user start prompt-library` quando a unidade existe e espera a porta responder, com limite de tempo, antes de abrir. Sem a unidade, sugere `npm run servico:instalar`.**
+     - Descartadas: só avisar sem abrir; abrir sem checar.
+
+110. **O `npm run servico:instalar` cria o symlink `~/.local/bin/prompt-library`, que aponta para um script do repositório, e o `servico:remover` o apaga. Os dois são idempotentes e só mexem no symlink que é deles, como na unidade (decisão 103).**
+     - Por quê: `~/.local/bin` já está no `PATH`, e o comando acompanha o serviço.
+     - Descartadas: um script npm próprio (`comando:instalar`); só documentar o `ln -s` no README.
+
+111. **Arrastar entre Coleções: arrasta-se um Prompt por vez da lista para uma Coleção ou para "Sem coleção" no painel de navegação, usando a operação de mover que já existe.**
+     - Descartadas: arrastar vários Prompts com seleção múltipla; reordenar Coleções arrastando, o que exigiria guardar a ordem.
+
+112. **Ao excluir uma Coleção, todos os `.md` dela, inclusive os de subpastas (decisão 46), vão para "Sem coleção", e o resto (imagens, outros arquivos) vai para `.trash/` do vault. A confirmação diz quantos itens são afetados.**
+     - Por quê: era o ponto que impedia a exclusão no M6, porque faltava decidir o destino dos Prompts da Coleção.
+     - Descartadas: só permitir excluir uma Coleção vazia; mandar os Prompts para a lixeira junto; bloquear se houver arquivos extras; mover os extras para a raiz de `Prompts/`.
+
+113. **Se algum Prompt da Coleção excluída tiver o mesmo nome de arquivo que um Prompt de "Sem coleção", a exclusão confere tudo antes, não move nada e lista os títulos em conflito para o usuário renomear.**
+     - Descartadas: renomear com sufixo " (2)"; mover só os que não colidem.
+
+114. **As Variáveis usam só a sintaxe `{{nome}}`, sem valor padrão nem descrição. O mesmo nome repetido no texto vira um campo só.** Detalha a decisão 28, que tirou as Variáveis do MVP.
+     - Por quê: é simples e continua legível no Obsidian.
+     - Descartadas: `{{nome|padrão}}`; padrões e descrições declarados no frontmatter.
+
+115. **O formulário das Variáveis abre ao copiar, tanto na Paleta Ctrl+K quanto no botão Copiar do painel do Prompt. Um Prompt sem Variáveis continua copiando direto.**
+     - Descartadas: o formulário só no painel do Prompt, com a Paleta copiando o texto cru; um painel lateral fixo com pré-visualização.
+
+116. **O formulário lembra os valores da última cópia de cada Prompt no `localStorage` do navegador, com a chave pelo id do Prompt. Nada é gravado no vault.**
+     - Descartadas: não lembrar; lembrar por nome de Variável em todos os Prompts.
+
+117. **O editor destaca levemente os `{{nome}}` no corpo do Prompt.**
+     - Por quê: deixa visível que o Prompt pede preenchimento.
+     - Descartada: manter o editor sem destaque.
+
+118. **O prompt da Análise avisa que `{{nome}}` são Variáveis: as Sugestões devem preservá-las e só sugerir novas quando fizer sentido.**
+     - Descartada: tratar `{{...}}` como texto comum na Análise.
+
+119. **Com o `stream-json`, o progresso da Análise ganha uma linha abaixo da fase e do tempo com a ferramenta que o Claude está usando no momento (por exemplo, "Lendo Code review/x.md"). As Sugestões continuam chegando juntas no fim.** Complementa a decisão 97.
+     - Descartadas: Sugestões aparecendo uma a uma, o que exigiria trocar o `--json-schema`; descartar o `stream-json` de vez; uma lista com todas as ações; uma lista recolhível.
+
+### Em aberto
+
+- Confirmar que `--output-format stream-json` funciona junto com `--json-schema` e devolve a saída estruturada no evento final, antes de planejar o `stream-json`.
+- O limite de tempo que o comando `prompt-library` espera o serviço responder.
