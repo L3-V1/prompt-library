@@ -1,7 +1,9 @@
 ---
 titulo: "roadmap-02, M3: Progresso da Análise com stream-json"
 data: 2026-11-05
-status: aprovado
+status: implementado
+branch: feat/milestone-03-stream-json
+encerrado_em: 2026-11-05
 tipo: milestone
 numero: "03"
 pai: roadmaps/roadmap-02
