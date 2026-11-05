@@ -85,7 +85,7 @@ export function PainelPrompt({ id }: { id: string }) {
       </div>
     );
   }
-  return <div className="p-6 text-sm text-suave">Carregando…</div>;
+  return <div className="coluna-folha py-6 text-sm text-suave">Carregando…</div>;
 }
 
 function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
@@ -379,242 +379,242 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
   const nomesColecoes = (colecoes.data ?? []).flatMap((c) => (c.nome === null ? [] : [c.nome]));
   if (base.colecao && !nomesColecoes.includes(base.colecao)) nomesColecoes.push(base.colecao);
 
+  const comLateral = emAnalise || painelAnalise || consultaAnalise.isError;
+
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <header className="flex flex-col gap-2 border-b border-borda px-4 pt-3 pb-3 md:px-6">
-        <div className="flex items-center gap-1">
-          <BotaoVoltar />
-          <input
-            value={rascunho.titulo}
-            onChange={(e) => mudarRascunho({ titulo: e.target.value })}
-            readOnly={emAnalise}
-            title={emAnalise ? 'O título fica travado durante a Análise' : undefined}
-            aria-label="Título do Prompt"
-            placeholder="Sem título"
-            className="min-w-0 flex-1 read-only:hover:bg-transparent read-only:focus:bg-transparent rounded-md bg-transparent px-1 py-1 font-serif text-xl font-semibold placeholder:text-suave hover:bg-realce/60 focus:bg-realce/60 focus:outline-none"
-          />
-          <button
-            type="button"
-            className={`botao-icone ${favorito ? 'text-terracota hover:text-terracota' : ''}`}
-            aria-pressed={favorito}
-            aria-label={favorito ? 'Remover dos Favoritos' : 'Marcar como Favorito'}
-            title={favorito ? 'Remover dos Favoritos' : 'Marcar como Favorito'}
-            onClick={() => void alternarFavorito()}
-          >
-            <Icone nome="estrela" preenchido={favorito} className="size-[18px]" />
-          </button>
-          <button
-            type="button"
-            className={`botao-icone ${painelAnalise || emAnalise ? 'text-terracota' : ''} ${painelAnalise ? 'bg-realce' : ''}`}
-            aria-label="Analisar"
-            aria-pressed={painelAnalise}
-            title={
-              temPendencias && !emAnalise
-                ? 'Analisar: salve ou descarte as alterações antes'
-                : 'Analisar com o Claude'
-            }
-            disabled={temPendencias && !emAnalise}
-            onClick={() => setPainelAnalise((v) => !v)}
-          >
-            <Icone nome="faisca" className="size-[18px]" />
-          </button>
-          <button
-            type="button"
-            className="botao-icone"
-            aria-label="Copiar o texto"
-            title="Copiar o texto salvo"
-            onClick={() => void copiar()}
-          >
-            <Icone nome="copiar" className="size-[18px]" />
-          </button>
-          <button
-            type="button"
-            className={`botao-icone ${versoesAbertas ? 'bg-realce text-texto' : ''}`}
-            aria-label="Versões"
-            aria-pressed={versoesAbertas}
-            title={emAnalise ? 'Versões: travadas durante a Análise' : 'Versões'}
-            disabled={emAnalise}
-            onClick={() => setVersoesAbertas((v) => !v)}
-          >
-            <Icone nome="historico" className="size-[18px]" />
-          </button>
-          <button
-            type="button"
-            className="botao-icone hover:text-perigo"
-            aria-label="Excluir"
-            title="Excluir"
-            onClick={() => setConfirmarExclusao(true)}
-          >
-            <Icone nome="lixeira" className="size-[18px]" />
-          </button>
-        </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pl-1">
-          <label className="flex items-center gap-1.5 text-xs text-suave">
-            <Icone nome="pasta" className="size-3.5" />
-            <span className="sr-only">Coleção</span>
-            <select
-              value={base.colecao ?? ''}
-              onChange={(e) => void mover(e.target.value === '' ? null : e.target.value)}
-              className="max-w-44 rounded-md border border-transparent bg-transparent py-0.5 pr-1 text-xs text-texto hover:border-borda focus:border-terracota focus:outline-none"
-            >
-              <option value="">{SEM_COLECAO}</option>
-              {nomesColecoes.map((nome) => (
-                <option key={nome} value={nome}>
-                  {nome}
-                </option>
-              ))}
-            </select>
-          </label>
-          <span className="h-4 w-px bg-borda" aria-hidden="true" />
-          <div className="flex min-w-40 flex-1 items-center gap-1.5">
-            <Icone nome="tag" className="size-3.5 shrink-0 text-suave" />
-            <CampoTags
-              tags={rascunho.tags}
-              sugestoes={(tags.data ?? []).map((t) => t.tag)}
-              onMudar={(novas) => mudarRascunho({ tags: novas })}
-              somenteLeitura={emAnalise}
-            />
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            {temPendencias && (
-              <span className="flex items-center gap-1.5 text-xs text-suave" role="status">
-                <span className="size-2 rounded-full bg-terracota" aria-hidden="true" />
-                Alterações não salvas
-              </span>
-            )}
-            {!emAnalise && (
+    <div className="relative flex h-full min-h-0">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="cabecalho-folha flex flex-col gap-3">
+          <div className="flex items-start gap-3">
+            <BotaoVoltar />
+            <div className="flex min-h-8 min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs text-suave">
+                <Icone nome="pasta" className="size-3.5" />
+                <span className="sr-only">Coleção</span>
+                <select
+                  value={base.colecao ?? ''}
+                  onChange={(e) => void mover(e.target.value === '' ? null : e.target.value)}
+                  className="max-w-44 rounded-md border border-transparent bg-transparent py-0.5 pr-1 text-xs font-medium text-texto transition-colors hover:border-borda focus:border-terracota focus:outline-none"
+                >
+                  <option value="">{SEM_COLECAO}</option>
+                  {nomesColecoes.map((nome) => (
+                    <option key={nome} value={nome}>
+                      {nome}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <span className="h-4 w-px bg-borda" aria-hidden="true" />
+              <div className="flex min-w-32 flex-1 items-center gap-1.5">
+                <Icone nome="tag" className="size-3.5 shrink-0 text-suave" />
+                <CampoTags
+                  tags={rascunho.tags}
+                  sugestoes={(tags.data ?? []).map((t) => t.tag)}
+                  onMudar={(novas) => mudarRascunho({ tags: novas })}
+                  somenteLeitura={emAnalise}
+                />
+              </div>
+            </div>
+            <div className="-mr-1.5 flex shrink-0 items-center">
               <button
                 type="button"
-                className="botao-primario"
-                disabled={!temPendencias || salvando}
-                onClick={() => void salvar()}
-                title={`Salvar (${TECLA_MOD}+S)`}
+                className={`botao-icone ${favorito ? 'text-terracota hover:text-terracota' : ''}`}
+                aria-pressed={favorito}
+                aria-label={favorito ? 'Remover dos Favoritos' : 'Marcar como Favorito'}
+                title={favorito ? 'Remover dos Favoritos' : 'Marcar como Favorito'}
+                onClick={() => void alternarFavorito()}
               >
-                {salvando ? 'Salvando…' : 'Salvar'}
+                <Icone nome="estrela" preenchido={favorito} className="size-[18px]" />
               </button>
+              <button
+                type="button"
+                className={`botao-icone ${painelAnalise || emAnalise ? 'text-terracota' : ''} ${painelAnalise ? 'bg-realce' : ''}`}
+                aria-label="Analisar"
+                aria-pressed={painelAnalise}
+                title={
+                  temPendencias && !emAnalise
+                    ? 'Analisar: salve ou descarte as alterações antes'
+                    : 'Analisar com o Claude'
+                }
+                disabled={temPendencias && !emAnalise}
+                onClick={() => setPainelAnalise((v) => !v)}
+              >
+                <Icone nome="faisca" className="size-[18px]" />
+              </button>
+              <button
+                type="button"
+                className="botao-icone"
+                aria-label="Copiar o texto"
+                title="Copiar o texto salvo"
+                onClick={() => void copiar()}
+              >
+                <Icone nome="copiar" className="size-[18px]" />
+              </button>
+              <button
+                type="button"
+                className={`botao-icone ${versoesAbertas ? 'bg-realce text-texto' : ''}`}
+                aria-label="Versões"
+                aria-pressed={versoesAbertas}
+                title={emAnalise ? 'Versões: travadas durante a Análise' : 'Versões'}
+                disabled={emAnalise}
+                onClick={() => setVersoesAbertas((v) => !v)}
+              >
+                <Icone nome="historico" className="size-[18px]" />
+              </button>
+              <button
+                type="button"
+                className="botao-icone hover:text-perigo"
+                aria-label="Excluir"
+                title="Excluir"
+                onClick={() => setConfirmarExclusao(true)}
+              >
+                <Icone nome="lixeira" className="size-[18px]" />
+              </button>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+            <input
+              value={rascunho.titulo}
+              onChange={(e) => mudarRascunho({ titulo: e.target.value })}
+              readOnly={emAnalise}
+              title={emAnalise ? 'O título fica travado durante a Análise' : undefined}
+              aria-label="Título do Prompt"
+              placeholder="Sem título"
+              className="-ml-1.5 min-w-0 flex-1 basis-full rounded-lg bg-transparent px-1.5 py-0.5 font-serif text-2xl sm:basis-64 md:text-[1.875rem] leading-tight font-medium tracking-[-0.015em] transition-colors placeholder:text-suave read-only:hover:bg-transparent read-only:focus:bg-transparent hover:bg-realce/50 focus:bg-realce/50 focus:outline-none"
+            />
+            <div className="ml-auto flex items-center gap-3 pb-1">
+              {temPendencias && (
+                <span className="flex items-center gap-1.5 text-xs text-suave" role="status">
+                  <span className="size-2 rounded-full bg-terracota" aria-hidden="true" />
+                  Alterações não salvas
+                </span>
+              )}
+              {!emAnalise && (
+                <button
+                  type="button"
+                  className="botao-primario"
+                  disabled={!temPendencias || salvando}
+                  onClick={() => void salvar()}
+                  title={`Salvar (${TECLA_MOD}+S)`}
+                >
+                  {salvando ? 'Salvando…' : 'Salvar'}
+                </button>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {removido && (
+          <div role="alert" className="faixa bg-perigo-fundo">
+            <Icone nome="alerta" className="size-4 text-perigo" />
+            <span className="flex-1">
+              Este Prompt foi removido do disco. O texto continua aqui só para você copiar.
+            </span>
+            <button type="button" className="botao" onClick={() => fecharPainel({ forcar: true })}>
+              Fechar
+            </button>
+          </div>
+        )}
+        {aviso && !removido && (
+          <div role="alert" className="faixa bg-realce/70">
+            <Icone nome="alerta" className="size-4 text-terracota" />
+            <span className="flex-1">Este Prompt mudou no disco.</span>
+            <button type="button" className="botao" onClick={verDiferencasDoAviso}>
+              Ver diferenças
+            </button>
+            <button type="button" className="botao" onClick={() => recarregarDoDisco(aviso)}>
+              Recarregar
+            </button>
+          </div>
+        )}
+
+        {emAnalise && (
+          <div role="status" className="faixa bg-realce/70">
+            <Icone nome="faisca" className="size-4 text-terracota" />
+            <span className="min-w-0 flex-1">
+              <strong className="font-semibold">Análise em andamento.</strong>{' '}
+              <span className="text-suave">
+                Você edita o Rascunho; título, Tags e Versões ficam travados até concluir ou
+                descartar.
+              </span>
+            </span>
+            <button
+              type="button"
+              className="botao lg:hidden"
+              onClick={() => setPainelAnalise(true)}
+            >
+              Sugestões
+            </button>
+          </div>
+        )}
+        {promptMudouFora && (
+          <div role="alert" className="faixa flex-nowrap bg-perigo-fundo">
+            <Icone nome="alerta" className="size-4 shrink-0 text-perigo" />
+            <span>
+              O Prompt mudou fora do app depois que a Análise começou. Ao concluir, você poderá ver
+              as diferenças e escolher se sobrescreve.
+            </span>
+          </div>
+        )}
+
+        <div className="relative flex min-h-0 flex-1">
+          <div className="relative min-h-0 min-w-0 flex-1">
+            {emAnalise ? (
+              <Editor
+                documento={`${id}:analise`}
+                valor={rascunhoAnalise.texto ?? ''}
+                onMudar={rascunhoAnalise.mudar}
+                onSalvar={() => void salvarRascunho()}
+                placeholder="O Rascunho está vazio."
+                rotulo="Rascunho da Análise"
+                destaque={destaque}
+              />
+            ) : (
+              <Editor
+                documento={id}
+                valor={rascunho.corpo}
+                onMudar={(corpo) => mudarRascunho({ corpo })}
+                onSalvar={() => void salvar()}
+                placeholder="Escreva o Prompt…"
+                rotulo="Texto do Prompt"
+              />
+            )}
+            {versoesAbertas && !emAnalise && (
+              <PainelVersoes
+                id={id}
+                pendente={temPendencias}
+                onRestaurar={restaurar}
+                onFechar={() => setVersoesAbertas(false)}
+              />
             )}
           </div>
         </div>
-      </header>
-
-      {removido && (
-        <div
-          role="alert"
-          className="flex flex-wrap items-center gap-3 border-b border-borda bg-perigo-fundo px-4 py-2.5 md:px-6 text-sm"
-        >
-          <Icone nome="alerta" className="size-4 text-perigo" />
-          <span className="flex-1">
-            Este Prompt foi removido do disco. O texto continua aqui só para você copiar.
-          </span>
-          <button type="button" className="botao" onClick={() => fecharPainel({ forcar: true })}>
-            Fechar
-          </button>
-        </div>
-      )}
-      {aviso && !removido && (
-        <div
-          role="alert"
-          className="flex flex-wrap items-center gap-3 border-b border-borda bg-realce px-4 py-2.5 md:px-6 text-sm"
-        >
-          <Icone nome="alerta" className="size-4 text-terracota" />
-          <span className="flex-1">Este Prompt mudou no disco.</span>
-          <button type="button" className="botao" onClick={verDiferencasDoAviso}>
-            Ver diferenças
-          </button>
-          <button type="button" className="botao" onClick={() => recarregarDoDisco(aviso)}>
-            Recarregar
-          </button>
-        </div>
-      )}
-
-      {emAnalise && (
-        <div
-          role="status"
-          className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-borda bg-realce/70 px-4 py-2 md:px-6 text-sm"
-        >
-          <Icone nome="faisca" className="size-4 text-terracota" />
-          <span className="min-w-0 flex-1">
-            <strong className="font-semibold">Análise em andamento.</strong>{' '}
-            <span className="text-suave">
-              Você edita o Rascunho; título, Tags e Versões ficam travados até concluir ou
-              descartar.
-            </span>
-          </span>
-          <button type="button" className="botao lg:hidden" onClick={() => setPainelAnalise(true)}>
-            Sugestões
-          </button>
-        </div>
-      )}
-      {promptMudouFora && (
-        <div
-          role="alert"
-          className="flex items-center gap-3 border-b border-borda bg-perigo-fundo px-4 py-2 text-sm md:px-6"
-        >
-          <Icone nome="alerta" className="size-4 shrink-0 text-perigo" />
-          <span>
-            O Prompt mudou fora do app depois que a Análise começou. Ao concluir, você poderá ver as
-            diferenças e escolher se sobrescreve.
-          </span>
-        </div>
-      )}
-
-      <div className="relative flex min-h-0 flex-1">
-        <div className="relative min-h-0 min-w-0 flex-1">
-          {emAnalise ? (
-            <Editor
-              documento={`${id}:analise`}
-              valor={rascunhoAnalise.texto ?? ''}
-              onMudar={rascunhoAnalise.mudar}
-              onSalvar={() => void salvarRascunho()}
-              placeholder="O Rascunho está vazio."
-              rotulo="Rascunho da Análise"
-              destaque={destaque}
-            />
-          ) : (
-            <Editor
-              documento={id}
-              valor={rascunho.corpo}
-              onMudar={(corpo) => mudarRascunho({ corpo })}
-              onSalvar={() => void salvar()}
-              placeholder="Escreva o Prompt…"
-              rotulo="Texto do Prompt"
-            />
-          )}
-          {versoesAbertas && !emAnalise && (
-            <PainelVersoes
-              id={id}
-              pendente={temPendencias}
-              onRestaurar={restaurar}
-              onFechar={() => setVersoesAbertas(false)}
-            />
-          )}
-        </div>
-        {(emAnalise || painelAnalise || consultaAnalise.isError) && (
-          <aside
-            aria-label="Análise"
-            className={`z-20 flex min-h-0 flex-col border-l border-borda bg-superficie max-lg:absolute max-lg:inset-y-0 max-lg:right-0 max-lg:w-[min(380px,100%)] max-lg:shadow-flutuante lg:w-[380px] lg:shrink-0 ${
-              painelAnalise ? '' : 'max-lg:hidden'
-            }`}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape' && !e.defaultPrevented) setPainelAnalise(false);
-            }}
-          >
-            <PainelAnalise
-              id={id}
-              analise={analise}
-              carregando={consultaAnalise.isPending}
-              erroLeitura={consultaAnalise.error}
-              podeIniciar={!temPendencias}
-              concluindo={concluindo}
-              antes={rascunhoAnalise.flush}
-              onAdotar={rascunhoAnalise.adotar}
-              onDestacar={setSugestaoDestacada}
-              onConcluir={() => void concluir()}
-              onFechar={() => setPainelAnalise(false)}
-            />
-          </aside>
-        )}
       </div>
+      {comLateral && (
+        <aside
+          aria-label="Análise"
+          className={`z-20 flex min-h-0 flex-col border-l border-borda bg-superficie max-lg:absolute max-lg:inset-y-0 max-lg:right-0 max-lg:w-[min(380px,100%)] max-lg:shadow-flutuante lg:w-[380px] lg:shrink-0 ${
+            painelAnalise ? '' : 'max-lg:hidden'
+          }`}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && !e.defaultPrevented) setPainelAnalise(false);
+          }}
+        >
+          <PainelAnalise
+            id={id}
+            analise={analise}
+            carregando={consultaAnalise.isPending}
+            erroLeitura={consultaAnalise.error}
+            podeIniciar={!temPendencias}
+            concluindo={concluindo}
+            antes={rascunhoAnalise.flush}
+            onAdotar={rascunhoAnalise.adotar}
+            onDestacar={setSugestaoDestacada}
+            onConcluir={() => void concluir()}
+            onFechar={() => setPainelAnalise(false)}
+          />
+        </aside>
+      )}
 
       <ModalConflito
         aberto={conflito !== null}
