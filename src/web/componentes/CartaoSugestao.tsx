@@ -60,9 +60,9 @@ export function CartaoSugestao({
 
   return (
     <li
-      className={`rounded-xl border bg-elevada transition-colors ${
+      className={`rounded-xl border bg-elevada transition-[border-color,box-shadow] ${
         regenerando ? 'border-terracota' : 'border-borda'
-      } ${destacavel ? 'hover:border-borda-forte focus-within:border-borda-forte' : ''} ${
+      } ${destacavel ? 'hover:border-borda-forte hover:shadow-cartao focus-within:border-borda-forte' : ''} ${
         decidida ? 'opacity-80' : ''
       }`}
       onMouseEnter={() => destacavel && onDestacar(true)}
@@ -72,7 +72,7 @@ export function CartaoSugestao({
         if (destacavel && !e.currentTarget.contains(e.relatedTarget)) onDestacar(false);
       }}
     >
-      <div className="flex items-start gap-2 px-4 pt-3 pb-2">
+      <div className="flex items-start gap-2 px-4 pt-4 pb-2">
         <span
           className={`selo mt-0.5 shrink-0 px-2 text-[11px] font-medium ${SELO[sugestao.status]}`}
         >
@@ -98,7 +98,7 @@ export function CartaoSugestao({
       </div>
 
       {!recolhida && (
-        <div className="flex flex-col gap-3 px-4 pb-3">
+        <div className="flex flex-col gap-3 px-4 pb-4">
           <MiniDiff original={sugestao.trechoOriginal} novo={sugestao.trechoNovo} />
           {sugestao.status === 'desatualizada' && (
             <p className="text-xs text-suave">

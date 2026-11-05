@@ -63,7 +63,7 @@ function Formulario({
         void criar();
       }}
     >
-      <div className="flex flex-col gap-4 px-6 pt-3 pb-5">
+      <div className="corpo-modal flex flex-col gap-4">
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium">Título</span>
           <input
@@ -98,7 +98,7 @@ function Formulario({
           </p>
         )}
       </div>
-      <div className="flex justify-end gap-2 border-t border-borda px-6 py-4">
+      <div className="rodape-modal">
         <button type="button" className="botao" onClick={onFechar}>
           Cancelar
         </button>

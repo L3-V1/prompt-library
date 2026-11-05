@@ -37,8 +37,8 @@ function Item({
         type="button"
         aria-current={ativo}
         onClick={onClick}
-        className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors ${
-          ativo ? 'bg-realce font-medium text-texto' : 'text-texto/85 hover:bg-realce/60'
+        className={`item item-nav flex w-full items-center gap-2.5 text-left text-sm ${
+          ativo ? 'font-medium text-texto' : 'text-texto/85'
         }`}
       >
         {icone && (
@@ -167,11 +167,10 @@ export function Navegacao({
 
   return (
     <nav aria-label="Coleções e Tags" className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center gap-2 px-4 pt-4 pb-3">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-terracota text-white">
-          <Icone nome="livro" className="size-4" />
-        </div>
-        <h1 className="font-serif text-base font-semibold">Biblioteca de Prompts</h1>
+      <div className="px-[1.125rem] pt-5 pb-4">
+        <h1 className="font-serif text-[1.1875rem] leading-none font-semibold">
+          Biblioteca de Prompts
+        </h1>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
@@ -198,8 +197,8 @@ export function Navegacao({
           />
         </ul>
 
-        <div className="mt-5 mb-1 flex items-center justify-between px-2.5">
-          <h2 className="text-xs font-semibold tracking-wide text-suave uppercase">Coleções</h2>
+        <div className="mt-6 mb-1 flex items-center justify-between pr-1 pl-2.5">
+          <h2 className="rotulo-secao">Coleções</h2>
           <button
             type="button"
             className="botao-icone size-6"
@@ -252,7 +251,7 @@ export function Navegacao({
               >
                 <button
                   type="button"
-                  className="botao-icone absolute top-1/2 right-1 size-6 -translate-y-1/2 bg-realce opacity-0 group-focus-within:opacity-100 group-hover:opacity-100"
+                  className="botao-icone absolute top-1/2 right-1 size-6 -translate-y-1/2 bg-elevada opacity-0 group-focus-within:opacity-100 group-hover:opacity-100"
                   aria-label={`Renomear a Coleção ${c.nome}`}
                   title="Renomear"
                   onClick={() => setRenomeando(c.nome)}
@@ -270,9 +269,7 @@ export function Navegacao({
           )}
         </ul>
 
-        <h2 className="mt-5 mb-1 px-2.5 text-xs font-semibold tracking-wide text-suave uppercase">
-          Tags
-        </h2>
+        <h2 className="rotulo-secao mt-6 mb-1.5 px-2.5">Tags</h2>
         <ul className="flex flex-col gap-0.5">
           {(tags.data ?? []).map((t) => (
             <Item
@@ -299,17 +296,20 @@ export function Navegacao({
               abrirDiretrizes();
               onEscolher();
             }}
-            className={`flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors ${
-              nav.vista === 'diretrizes' ? 'bg-realce font-medium' : 'hover:bg-realce/60'
+            className={`item item-nav flex min-w-0 flex-1 items-center gap-2.5 text-left text-sm ${
+              nav.vista === 'diretrizes' ? 'font-medium' : ''
             }`}
           >
-            <Icone nome="livro" className="size-4 text-suave" />
+            <Icone
+              nome="livro"
+              className={`size-4 ${nav.vista === 'diretrizes' ? 'text-terracota' : 'text-suave'}`}
+            />
             Diretrizes
           </button>
           <div
             role="radiogroup"
             aria-label="Tema"
-            className="flex shrink-0 rounded-lg border border-borda bg-elevada p-0.5"
+            className="flex shrink-0 rounded-lg bg-realce/70 p-0.5"
           >
             {TEMAS.map((t) => (
               <button
@@ -324,7 +324,9 @@ export function Navegacao({
                   toast.sucesso(`${t.rotulo} ativado`);
                 }}
                 className={`flex size-7 items-center justify-center rounded-md transition-colors ${
-                  tema === t.valor ? 'bg-realce text-terracota' : 'text-suave hover:text-texto'
+                  tema === t.valor
+                    ? 'bg-elevada text-terracota shadow-cartao'
+                    : 'text-suave hover:text-texto'
                 }`}
               >
                 <Icone nome={t.icone} className="size-3.5" />

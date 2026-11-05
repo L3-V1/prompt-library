@@ -51,11 +51,11 @@ export function Dialogo({
         // Clique no backdrop (o próprio <dialog>, fora do conteúdo) fecha.
         if (e.target === e.currentTarget) onFecharRef.current();
       }}
-      className={`m-auto max-h-[calc(100dvh-2rem)] overflow-visible rounded-2xl border border-borda bg-elevada p-0 text-texto shadow-flutuante ${className}`}
+      className={`m-auto max-h-[calc(100dvh-2rem)] overflow-visible rounded-2xl bg-elevada p-0 text-texto shadow-flutuante ${className}`}
     >
       {aberto && (
         <div className="flex max-h-[calc(100dvh-2rem)] flex-col">
-          {titulo && <h2 className="px-6 pt-5 pb-1 font-serif text-lg font-semibold">{titulo}</h2>}
+          {titulo && <h2 className="px-6 pt-6 pb-2 font-serif text-xl font-semibold">{titulo}</h2>}
           {children}
         </div>
       )}

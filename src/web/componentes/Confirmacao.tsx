@@ -22,8 +22,8 @@ export function Confirmacao({
 }) {
   return (
     <Dialogo aberto={aberto} onFechar={onCancelar} titulo={titulo}>
-      <div className="px-6 pt-1 pb-5 text-sm text-suave">{children}</div>
-      <div className="flex justify-end gap-2 border-t border-borda px-6 py-4">
+      <div className="corpo-modal text-sm text-suave">{children}</div>
+      <div className="rodape-modal">
         <button type="button" className="botao" onClick={onCancelar} data-autofocus>
           Cancelar
         </button>
@@ -53,10 +53,10 @@ export function ConfirmarSaida({
       onFechar={() => onEscolher('continuar')}
       titulo="Descartar alterações?"
     >
-      <div className="px-6 pt-1 pb-5 text-sm text-suave">
+      <div className="corpo-modal text-sm text-suave">
         Há alterações não salvas. Se sair agora sem salvar, elas serão perdidas.
       </div>
-      <div className="flex flex-wrap justify-end gap-2 border-t border-borda px-6 py-4">
+      <div className="rodape-modal">
         <button type="button" className="botao mr-auto" onClick={() => onEscolher('continuar')}>
           Continuar editando
         </button>
