@@ -24,11 +24,19 @@ npm run save:install       # instala o comando /save no Claude Code
 npm run servico:instalar   # build + serviço systemd --user, sobe no login
 ```
 
-Depois, abra `http://127.0.0.1:5174`.
+Depois, rode `prompt-library` (ou abra `http://127.0.0.1:5174`).
 
 - `save:install` cria o link `~/.claude/skills/save` → `<repo>/skills/save`. Se o link já aponta para cá, não faz nada; se existe outra coisa no lugar, falha sem tocar nela.
-- `servico:instalar` roda o build se faltar, grava `~/.config/systemd/user/prompt-library.service` e faz `enable` e `start`. A unidade guarda caminhos absolutos do `node` e do `claude` encontrados na instalação (o serviço não herda o `PATH` do seu shell). Rodar de novo é seguro: sem mudanças, nada acontece; uma unidade que não foi gerada por aqui nunca é sobrescrita. O serviço sobe quando você faz login (sem linger).
+- `servico:instalar` roda o build se faltar, grava `~/.config/systemd/user/prompt-library.service` e faz `enable` e `start`. A unidade guarda caminhos absolutos do `node` e do `claude` encontrados na instalação (o serviço não herda o `PATH` do seu shell). Rodar de novo é seguro: sem mudanças, nada acontece; uma unidade que não foi gerada por aqui nunca é sobrescrita. O serviço sobe quando você faz login (sem linger). Também cria o symlink `~/.local/bin/prompt-library` → `<repo>/scripts/prompt-library.mjs`; se já existir outra coisa no lugar, só avisa e não toca nela.
 - Sem serviço: `npm start` faz o build e sobe o servidor em primeiro plano (Ctrl+C para parar). `npm run serve` sobe sem refazer o build.
+
+### Abrir o app
+
+```sh
+prompt-library
+```
+
+Abre `http://127.0.0.1:5174` no navegador (`xdg-open`). Se o app não responder, roda `systemctl --user start prompt-library` e espera até 10 s pelo `GET /api/health` antes de abrir; se não subir, sugere `journalctl --user -u prompt-library -f`. Sem a unidade instalada, não abre nada e sugere rodar `npm run servico:instalar` no repositório. Precisa de `~/.local/bin` no `PATH`.
 
 ### Atualizar depois de mudar o código
 
@@ -41,7 +49,7 @@ Se o caminho do `node` ou do `claude` mudar (outra versão do Node, por exemplo)
 ### Remover
 
 ```sh
-npm run servico:remover    # disable --now e apaga a unidade (só se for nossa)
+npm run servico:remover    # disable --now, apaga a unidade e o symlink prompt-library (só se forem nossos)
 rm ~/.claude/skills/save   # remove o /save
 ```
 

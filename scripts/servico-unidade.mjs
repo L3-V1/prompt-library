@@ -2,7 +2,14 @@
 import path from 'node:path';
 
 export const NOME_UNIDADE = 'prompt-library.service';
+export const URL_APP = 'http://127.0.0.1:5174';
 export const CABECALHO = '# Gerado por prompt-library (npm run servico:instalar). Não edite à mão.';
+
+/** Onde fica a unidade: `<XDG_CONFIG_HOME ou ~/.config>/systemd/user/prompt-library.service`. */
+export function caminhoUnidade({ xdgConfigHome, home }) {
+  const dirConfig = xdgConfigHome || path.join(home, '.config');
+  return path.join(dirConfig, 'systemd', 'user', NOME_UNIDADE);
+}
 
 /** Diretórios de sistema que fecham o `PATH` do serviço. */
 const PATH_SISTEMA = ['/usr/local/bin', '/usr/bin', '/bin'];
