@@ -443,3 +443,17 @@ Registro cronológico das decisões tomadas no projeto. Seções mais recentes n
 
 121. **O symlink `~/.local/bin/prompt-library` é "nosso" quando aponta para um `scripts/prompt-library.mjs` (deste ou de outro clone); um link nosso com outro alvo é refeito. Um conflito no `servico:instalar` só avisa e não faz o comando falhar, porque o serviço já foi instalado.** Detalha a decisão 110.
      - Descartado: falhar o `servico:instalar` inteiro quando o symlink está ocupado.
+
+## 2026-11-05: roadmap-02, M1, Coleções
+
+### Decisões
+
+122. **A prévia da exclusão vem de `GET /api/colecoes/:nome/exclusao`, que devolve `{ prompts, outros, conflitos }`. A UI mostra os conflitos antes de pedir confirmação. O `DELETE` confere de novo e responde 409 (`colecao_com_conflitos`, com `titulos`) se surgir colisão entre a prévia e a exclusão.**
+
+123. **Ao excluir uma Coleção, os `.md` vão para a raiz de `Prompts/` com o mesmo nome. Depois as pastas vazias são removidas e, se ainda restar algo, a pasta da Coleção vai inteira para `.trash/<nome>` (com `caminhoLivre`, sem extensão).** É o que o Obsidian faz ao excluir uma pasta; a lixeira não fica com arquivos espalhados nem com colisões de nome. "Prompt" é o mesmo que a varredura considera: `.md` fora de entradas com prefixo `.`/`_`. Um `_rascunho.md` ou uma pasta `_x/` vão para a lixeira.
+     - Descartado: mandar cada arquivo que não é Prompt solto para `.trash/`.
+
+124. **Conflito é um nome de arquivo de destino repetido: um `.md` da Coleção com o mesmo nome de um arquivo da raiz de `Prompts/`, ou dois `.md` de subpastas diferentes com o mesmo nome. Com conflito, nada se move; a mensagem lista os títulos dos Prompts da Coleção envolvidos.**
+     - Descartado: renomear automaticamente (`x 2.md`), que mudaria nomes de arquivo sem o usuário ver.
+
+125. **O arrastar da lista usa um MIME próprio (`application/x-prompt-library`), e o item arrastado fica num módulo (`src/web/mover.ts`).** O `dataTransfer` só é legível no `drop`; pelo módulo, o `dragover` já sabe a Coleção de origem, que não é destacada nem aceita a soltura. Os alvos são "Sem coleção" e cada Coleção (não Todos, Favoritos nem Tags). Soltar o Prompt aberto avisa o painel por um evento local (`gravado`), que troca a base na hora, sem esperar o SSE.
