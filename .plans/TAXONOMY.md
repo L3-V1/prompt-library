@@ -47,3 +47,5 @@ features, fixes, refactors, spikes, docs, chores
         - [roadmap-02, M1: Coleções (arrastar e excluir)](roadmaps/roadmap-02/milestones/milestone-01/milestone-01-colecoes-arrastar-e-excluir.md)
       - **milestone-02/**
         - [roadmap-02, M2: Variáveis {{nome}}](roadmaps/roadmap-02/milestones/milestone-02/milestone-02-variaveis-nos-prompts.md)
+      - **milestone-03/**
+        - [roadmap-02, M3: Progresso da Análise com stream-json](roadmaps/roadmap-02/milestones/milestone-03/milestone-03-progresso-analise-stream-json.md)
