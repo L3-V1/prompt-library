@@ -43,3 +43,5 @@ features, fixes, refactors, spikes, docs, chores
     - **milestones/**
       - **milestone-00/**
         - [roadmap-02, M0: comando prompt-library](roadmaps/roadmap-02/milestones/milestone-00/milestone-00-comando-prompt-library.md)
+      - **milestone-01/**
+        - [roadmap-02, M1: Coleções (arrastar e excluir)](roadmaps/roadmap-02/milestones/milestone-01/milestone-01-colecoes-arrastar-e-excluir.md)
