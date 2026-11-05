@@ -10,6 +10,7 @@ import {
   type AlvoIncorporacao,
   type Analise,
   type ArmazenamentoAnalises,
+  type AtividadeClaude,
   type Diretrizes,
   type ExecucaoAnalise,
   type ModeloClaude,
@@ -83,6 +84,10 @@ export function criarServicoAnalise(deps: DepsServicoAnalise) {
     eventos.emitir({ tipo: 'analise', dados: { promptId, analise } });
   }
 
+  function emitirAtividade(promptId: string, atividade: AtividadeClaude | null): void {
+    eventos.emitir({ tipo: 'atividade', dados: { promptId, atividade } });
+  }
+
   async function gravar(analise: Analise): Promise<Analise> {
     const nova = { ...analise, atualizadaEm: agora() };
     await armazenamento.gravar(nova);
@@ -121,6 +126,7 @@ export function criarServicoAnalise(deps: DepsServicoAnalise) {
     const job: Job = { controlador: new AbortController() };
     jobs.set(id, job);
     const vale = () => jobs.get(id) === job;
+    emitirAtividade(id, null);
 
     void (async () => {
       try {
@@ -141,6 +147,10 @@ export function criarServicoAnalise(deps: DepsServicoAnalise) {
           cwd: pastas.prompts,
           sinal: job.controlador.signal,
           timeoutMs,
+          // Atividade de um job cancelado ou substituído não chega ao painel.
+          aoAtivar: (atividade) => {
+            if (vale()) emitirAtividade(id, atividade);
+          },
         });
         const saida = esquemaSaida.safeParse(resposta.saida);
         if (!saida.success) {

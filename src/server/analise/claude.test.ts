@@ -3,9 +3,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
+import type { AtividadeClaude } from '../../core/index.js';
 import {
+  atividadeDe,
   criarExecutorClaude,
   ExecucaoCanceladaError,
   ExecucaoClaudeError,
@@ -77,7 +79,8 @@ describe('criarExecutorClaude', () => {
       expect(sem.args).toEqual(
         expect.arrayContaining([
           '--output-format',
-          'json',
+          'stream-json',
+          '--verbose',
           '--tools',
           'Read Glob Grep',
           '--allowedTools',
@@ -101,6 +104,45 @@ describe('criarExecutorClaude', () => {
     } finally {
       await fs.rm(cwd, { recursive: true, force: true });
     }
+  });
+
+  it('repassa os tool_use ao aoAtivar, na ordem, sem o StructuredOutput', async () => {
+    const atividades: AtividadeClaude[] = [];
+    const r = await falso('atividades')(pedido({ aoAtivar: (a) => atividades.push(a) }));
+    expect(atividades).toEqual([
+      { tipo: 'listar', padrao: '**/*.md' },
+      { tipo: 'buscar', termo: 'revis' },
+      { tipo: 'ler', caminho: 'Code review/x.md' },
+    ]);
+    expect(r).toMatchObject({
+      saida: { sugestoes: [{ trechoOriginal: 'muito longo' }] },
+      custoUsd: 0.001,
+      modelo: 'claude-haiku-x',
+    });
+  });
+
+  it('stream sem tool_use não chama o aoAtivar', async () => {
+    const aoAtivar = vi.fn();
+    await falso('sucesso')(pedido({ aoAtivar }));
+    expect(aoAtivar).not.toHaveBeenCalled();
+  });
+
+  it('um aoAtivar que lança não quebra a execução', async () => {
+    const erroConsole = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const aoAtivar = vi.fn(() => {
+        throw new Error('falha no ouvinte');
+      });
+      const r = await falso('atividades')(pedido({ aoAtivar }));
+      expect(aoAtivar).toHaveBeenCalledTimes(3);
+      expect(r.custoUsd).toBe(0.001);
+    } finally {
+      erroConsole.mockRestore();
+    }
+  });
+
+  it('sem o evento result vira erro', async () => {
+    await expect(falso('sem-result')(pedido())).rejects.toThrow(/sem o evento result/);
   });
 
   it('is_error vira erro com o result', async () => {
@@ -165,5 +207,43 @@ describe('criarExecutorClaude', () => {
       delete process.env['PID_FALSO'];
       await fs.rm(pidArq, { force: true });
     }
+  });
+});
+
+describe('atividadeDe', () => {
+  const cwd = '/vault/Prompts';
+
+  it('Read: caminho relativo ao cwd; fora dele, como veio', () => {
+    expect(
+      atividadeDe({ name: 'Read', input: { file_path: '/vault/Prompts/a/b.md' } }, cwd),
+    ).toEqual({ tipo: 'ler', caminho: 'a/b.md' });
+    expect(atividadeDe({ name: 'Read', input: { file_path: '/etc/hosts' } }, cwd)).toEqual({
+      tipo: 'ler',
+      caminho: '/etc/hosts',
+    });
+    expect(atividadeDe({ name: 'Read', input: { file_path: '/vault/Outro/x.md' } }, cwd)).toEqual({
+      tipo: 'ler',
+      caminho: '/vault/Outro/x.md',
+    });
+  });
+
+  it('Grep e Glob: o pattern', () => {
+    expect(atividadeDe({ name: 'Grep', input: { pattern: 'x' } }, cwd)).toEqual({
+      tipo: 'buscar',
+      termo: 'x',
+    });
+    expect(atividadeDe({ name: 'Glob', input: { pattern: '*.md' } }, cwd)).toEqual({
+      tipo: 'listar',
+      padrao: '*.md',
+    });
+  });
+
+  it('input sem o campo, ferramenta desconhecida ou bloco inválido: null', () => {
+    expect(atividadeDe({ name: 'Read', input: {} }, cwd)).toBeNull();
+    expect(atividadeDe({ name: 'Grep' }, cwd)).toBeNull();
+    expect(atividadeDe({ name: 'Glob', input: { pattern: 3 } }, cwd)).toBeNull();
+    expect(atividadeDe({ name: 'StructuredOutput', input: { sugestoes: [] } }, cwd)).toBeNull();
+    expect(atividadeDe({ name: 'Bash', input: { command: 'ls' } }, cwd)).toBeNull();
+    expect(atividadeDe(null, cwd)).toBeNull();
   });
 });

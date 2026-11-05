@@ -1,6 +1,9 @@
 import { spawn } from 'node:child_process';
+import path from 'node:path';
 
 import { z } from 'zod';
+
+import type { AtividadeClaude } from '../../core/index.js';
 
 /** O que o Claude devolve: `{ sugestoes: [{ justificativa, trechoOriginal, trechoNovo }] }`. */
 export const esquemaSaida = z.object({
@@ -22,6 +25,8 @@ export interface PedidoClaude {
   cwd: string;
   sinal: AbortSignal;
   timeoutMs: number;
+  /** Chamado a cada ferramenta que o Claude usa (`tool_use` do `stream-json`, decisão 128). */
+  aoAtivar?: (atividade: AtividadeClaude) => void;
 }
 
 export interface RespostaClaude {
@@ -51,7 +56,7 @@ export const TIMEOUT_PADRAO_MS = 300_000;
 /** O Linux limita um único argumento a 128 KiB (`MAX_ARG_STRLEN`); o prompt vai por argumento. */
 export const LIMITE_PROMPT_BYTES = 100 * 1024;
 const ESPERA_SIGKILL_MS = 5_000;
-const FIM_STDERR = 2_000;
+const FIM_SAIDA = 2_000;
 const FERRAMENTAS = 'Read Glob Grep';
 
 // O validador do `claude` não aceita o `$schema` draft 2020-12 que o zod põe por padrão.
@@ -65,7 +70,8 @@ export function argumentosClaude(prompt: string, modelo: string | null): string[
     '-p',
     prompt,
     '--output-format',
-    'json',
+    'stream-json',
+    '--verbose',
     '--json-schema',
     esquemaJson,
     '--tools',
@@ -93,15 +99,55 @@ const esquemaEnvelope = z.looseObject({
 
 type Envelope = z.infer<typeof esquemaEnvelope>;
 
-function lerEnvelope(stdout: string): Envelope | null {
-  const texto = stdout.trim();
-  if (texto === '') return null;
-  try {
-    const r = esquemaEnvelope.safeParse(JSON.parse(texto));
-    return r.success ? r.data : null;
-  } catch {
-    return null;
+const texto = (v: unknown): string | null => (typeof v === 'string' && v !== '' ? v : null);
+
+/**
+ * A atividade de um bloco `tool_use` (decisão 128): `Read` vira o caminho relativo ao `cwd` (o
+ * Claude manda o absoluto; fora do `cwd`, fica como veio), `Grep` e `Glob`, o `pattern`. Outras
+ * ferramentas (`StructuredOutput`) ou input sem o campo: `null`.
+ */
+export function atividadeDe(bloco: unknown, cwd: string): AtividadeClaude | null {
+  if (typeof bloco !== 'object' || bloco === null) return null;
+  const { name, input } = bloco as { name?: unknown; input?: unknown };
+  const campos = (typeof input === 'object' && input !== null ? input : {}) as Record<
+    string,
+    unknown
+  >;
+  switch (name) {
+    case 'Read': {
+      const arquivo = texto(campos['file_path']);
+      if (!arquivo) return null;
+      const relativo = path.relative(cwd, arquivo);
+      const fora =
+        relativo === '' ||
+        relativo === '..' ||
+        relativo.startsWith(`..${path.sep}`) ||
+        path.isAbsolute(relativo);
+      return { tipo: 'ler', caminho: fora ? arquivo : relativo.split(path.sep).join('/') };
+    }
+    case 'Grep': {
+      const termo = texto(campos['pattern']);
+      return termo ? { tipo: 'buscar', termo } : null;
+    }
+    case 'Glob': {
+      const padrao = texto(campos['pattern']);
+      return padrao ? { tipo: 'listar', padrao } : null;
+    }
+    default:
+      return null;
   }
+}
+
+/** Os blocos `tool_use` de um evento `assistant` do `stream-json`. */
+function blocosToolUse(evento: Record<string, unknown>): unknown[] {
+  const mensagem = evento['message'];
+  if (typeof mensagem !== 'object' || mensagem === null) return [];
+  const conteudo = (mensagem as { content?: unknown }).content;
+  if (!Array.isArray(conteudo)) return [];
+  return conteudo.filter(
+    (b: unknown) =>
+      typeof b === 'object' && b !== null && (b as { type?: unknown }).type === 'tool_use',
+  );
 }
 
 /** O modelo que mais custou na execução, pelo `modelUsage`. */
@@ -122,8 +168,8 @@ const resumir = (texto: string) => {
 
 /**
  * Executor real: `spawn` do `claude` com stdin fechado e cwd em `Prompts/` (decisão 41). Lê o
- * envelope JSON do stdout e valida o `structured_output`. Timeout e abort mandam SIGTERM e,
- * 5 s depois, SIGKILL.
+ * stdout em JSONL (`stream-json`, decisão 128): repassa cada `tool_use` ao `aoAtivar` e valida o
+ * `structured_output` do evento `result`. Timeout e abort mandam SIGTERM e, 5 s depois, SIGKILL.
  */
 export function criarExecutorClaude({ binario }: { binario: string }): ExecutorClaude {
   return (pedido) =>
@@ -149,15 +195,53 @@ export function criarExecutorClaude({ binario }: { binario: string }): ExecutorC
         env,
       });
 
-      let stdout = '';
+      let buffer = '';
+      let fimStdout = '';
       let stderr = '';
+      let envelope: Envelope | null = null;
       let terminado = false;
       let motivo: 'timeout' | 'cancelado' | null = null;
       let matar: NodeJS.Timeout | undefined;
 
-      filho.stdout.setEncoding('utf8').on('data', (d: string) => (stdout += d));
+      function processarLinha(linha: string) {
+        if (linha.trim() === '') return;
+        let evento: unknown;
+        try {
+          evento = JSON.parse(linha);
+        } catch {
+          return;
+        }
+        if (typeof evento !== 'object' || evento === null) return;
+        const tipo = (evento as { type?: unknown }).type;
+        if (tipo === 'assistant') {
+          if (!pedido.aoAtivar) return;
+          for (const bloco of blocosToolUse(evento as Record<string, unknown>)) {
+            const atividade = atividadeDe(bloco, pedido.cwd);
+            if (!atividade) continue;
+            try {
+              pedido.aoAtivar(atividade);
+            } catch (erro) {
+              console.error('erro no aoAtivar do executor do Claude:', erro);
+            }
+          }
+        } else if (tipo === 'result') {
+          const r = esquemaEnvelope.safeParse(evento);
+          if (r.success) envelope = r.data;
+        }
+      }
+
+      filho.stdout.setEncoding('utf8').on('data', (d: string) => {
+        fimStdout = (fimStdout + d).slice(-FIM_SAIDA);
+        buffer += d;
+        let quebra = buffer.indexOf('\n');
+        while (quebra !== -1) {
+          processarLinha(buffer.slice(0, quebra));
+          buffer = buffer.slice(quebra + 1);
+          quebra = buffer.indexOf('\n');
+        }
+      });
       filho.stderr.setEncoding('utf8').on('data', (d: string) => {
-        stderr = (stderr + d).slice(-FIM_STDERR);
+        stderr = (stderr + d).slice(-FIM_SAIDA);
       });
 
       function encerrar(m: 'timeout' | 'cancelado') {
@@ -203,11 +287,12 @@ export function criarExecutorClaude({ binario }: { binario: string }): ExecutorC
             ),
           );
         }
-        const envelope = lerEnvelope(stdout);
+        processarLinha(buffer);
+        buffer = '';
         const detalhe = () =>
           (typeof envelope?.result === 'string' && envelope.result.trim()) ||
           resumir(stderr) ||
-          resumir(stdout) ||
+          resumir(fimStdout) ||
           'sem detalhes';
         if (codigo !== 0) {
           const como = codigo === null ? `sinal ${sinal ?? '?'}` : `código ${codigo}`;
@@ -215,7 +300,9 @@ export function criarExecutorClaude({ binario }: { binario: string }): ExecutorC
         }
         if (!envelope) {
           return finalizar(
-            new ExecucaoClaudeError(`Resposta inválida do Claude Code (não é JSON): ${detalhe()}`),
+            new ExecucaoClaudeError(
+              `Resposta inválida do Claude Code (sem o evento result): ${detalhe()}`,
+            ),
           );
         }
         if (envelope.is_error || envelope.subtype !== 'success') {

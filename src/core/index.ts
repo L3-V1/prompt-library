@@ -32,6 +32,7 @@ export type { Change } from 'diff';
 export {
   MOTIVOS_VERSAO,
   type Analise,
+  type AtividadeClaude,
   type EstadoDiretrizes,
   type ExecucaoAnalise,
   type ModeloClaude,

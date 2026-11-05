@@ -169,6 +169,26 @@ describe('servico de Análise', () => {
     expect((await servico.ler('p1'))?.erro).toBeNull();
   });
 
+  it('emite a atividade do Claude: null ao iniciar, os tool_use e nada depois de cancelar', async () => {
+    const { servico, falso, eventos } = await montar();
+    const atividades: Extract<Evento, { tipo: 'atividade' }>['dados'][] = [];
+    eventos.assinar((e) => {
+      if (e.tipo === 'atividade') atividades.push(e.dados);
+    });
+    await servico.iniciar('p1');
+    expect(atividades).toEqual([{ promptId: 'p1', atividade: null }]);
+    await vi.waitFor(() => expect(falso.chamadas).toHaveLength(1));
+    const { aoAtivar } = falso.chamadas[0]!.pedido;
+    aoAtivar?.({ tipo: 'ler', caminho: 'Revisor.md' });
+    expect(atividades.at(-1)).toEqual({
+      promptId: 'p1',
+      atividade: { tipo: 'ler', caminho: 'Revisor.md' },
+    });
+    await servico.cancelar('p1');
+    aoAtivar?.({ tipo: 'buscar', termo: 'x' });
+    expect(atividades).toHaveLength(2);
+  });
+
   it('descartar durante o job: o resultado é ignorado e o Prompt fica intacto', async () => {
     const { servico, falso, vault, recebidos } = await montar();
     await servico.iniciar('p1');
