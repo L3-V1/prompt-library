@@ -61,8 +61,8 @@ export function alteracoes(estado: EstadoEdicao): Partial<ConteudoPrompt> | null
 }
 
 /**
- * Troca a base e mantém o rascunho. Usado depois de Favorito e Coleção (decisão 51), que mudam
- * o hash do arquivo sem criar Versão; sem isso, o Ctrl+S seguinte daria 409 falso.
+ * Troca a base e mantém o rascunho. Usado depois de Favorito (decisão 51), que muda o hash do
+ * arquivo sem criar Versão, e de mover para outra Coleção, que muda o caminho; sem isso, o Ctrl+S seguinte daria 409 falso.
  */
 export function rebasear<B extends BasePrompt>(estado: EstadoEdicao<B>, novo: B): EstadoEdicao<B> {
   return { base: novo, rascunho: estado.rascunho };
@@ -82,7 +82,8 @@ export function aposSalvar<B extends BasePrompt>(
 
 /**
  * O Prompt aberto mudou no servidor (`null` = removido):
- * - hash igual à base: foi o próprio app, `ignorar`;
+ * - hash igual à base: foi o próprio app, `ignorar`, trocando a base (mover para outra
+ *   Coleção não muda os bytes, só o caminho);
  * - o disco tem o mesmo conteúdo do rascunho ou da base (o próprio salvar, ou só Favorito e
  *   Coleção): `ignorar`, trocando a base;
  * - sem pendências: `recarregar`;
@@ -93,7 +94,8 @@ export function reagirAMudancaExterna<B extends BasePrompt>(
   novo: B | null,
 ): Reacao<EstadoEdicao<B>, B> {
   if (novo === null) return { acao: 'removido' };
-  if (novo.hash === estado.base.hash) return { acao: 'ignorar', estado };
+  // Mesmos bytes, mas a Coleção (o caminho) pode ter mudado: mover não altera o arquivo.
+  if (novo.hash === estado.base.hash) return { acao: 'ignorar', estado: rebasear(estado, novo) };
   if (mesmoConteudo(novo, estado.rascunho)) return { acao: 'ignorar', estado: iniciar(novo) };
   if (mesmoConteudo(novo, estado.base)) return { acao: 'ignorar', estado: rebasear(estado, novo) };
   if (!pendente(estado)) return { acao: 'recarregar', estado: iniciar(novo) };

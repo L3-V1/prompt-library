@@ -70,11 +70,11 @@ describe('reagirAMudancaExterna', () => {
   const editado = { base, rascunho: { ...base, corpo: 'Meu texto.\n' } };
   const externo = { ...base, corpo: 'Texto do Obsidian.\n', hash: 'h9' };
 
-  it('hash igual à base: ignorar', () => {
-    expect(reagirAMudancaExterna(editado, { ...base })).toEqual({
-      acao: 'ignorar',
-      estado: editado,
-    });
+  it('hash igual à base: ignorar, trocando a base (o caminho pode ter mudado)', () => {
+    const movido = { ...base, caminho: 'B/Revisão.md' };
+    const r = reagirAMudancaExterna(editado, movido);
+    expect(r).toEqual({ acao: 'ignorar', estado: { base: movido, rascunho: editado.rascunho } });
+    if (r.acao === 'ignorar') expect(r.estado.base).toBe(movido);
   });
 
   it('sem pendências: recarregar', () => {
