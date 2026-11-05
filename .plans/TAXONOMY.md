@@ -35,3 +35,5 @@ features, fixes, refactors, spikes, docs, chores
         - [M4: Interface base](roadmaps/roadmap-01/milestones/milestone-04/milestone-04-interface-base.md)
       - **milestone-05/**
         - [M5: Análise (Aprimoramento assistido)](roadmaps/roadmap-01/milestones/milestone-05/milestone-05-analise-aprimoramento-assistido.md)
+      - **milestone-06/**
+        - [M6: Acabamento](roadmaps/roadmap-01/milestones/milestone-06/milestone-06-acabamento.md)
