@@ -1,6 +1,7 @@
 // Instala ou remove o serviço `systemd --user` do app (sobe no login, sem linger).
 //   node scripts/servico.mjs instalar | remover
-// Idempotente; uma unidade que não foi gerada por aqui nunca é regravada nem apagada.
+// Também cria/apaga o symlink `~/.local/bin/prompt-library` (o comando que abre o app).
+// Idempotente; uma unidade ou um symlink que não são daqui nunca são regravados nem apagados.
 import { spawnSync } from 'node:child_process';
 import { constants } from 'node:fs';
 import fs from 'node:fs/promises';
@@ -8,13 +9,21 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { gerarUnidade, NOME_UNIDADE, unidadeNossa } from './servico-unidade.mjs';
+import { acaoInstalarComando, acaoRemoverComando, ORIGEM_COMANDO } from './servico-comando.mjs';
+import {
+  caminhoUnidade,
+  gerarUnidade,
+  NOME_UNIDADE,
+  unidadeNossa,
+  URL_APP,
+} from './servico-unidade.mjs';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const dirConfig = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
-const destino = path.join(dirConfig, 'systemd', 'user', NOME_UNIDADE);
+const destino = caminhoUnidade({ xdgConfigHome: process.env.XDG_CONFIG_HOME, home: os.homedir() });
 const servico = NOME_UNIDADE.replace(/\.service$/, '');
-const URL_APP = 'http://127.0.0.1:5174';
+const dirBin = path.join(os.homedir(), '.local', 'bin');
+const destinoComando = path.join(dirBin, 'prompt-library');
+const origemComando = path.join(repo, ORIGEM_COMANDO);
 
 async function executavel(arquivo) {
   try {
@@ -70,6 +79,60 @@ function systemctl(args, { exigir = true, silencioso = false } = {}) {
   return r.status;
 }
 
+/** O que há em `destinoComando`: `null`, `{ tipo: 'link', alvo }` (resolvido) ou `{ tipo: 'outro' }`. */
+async function lerComando() {
+  let info;
+  try {
+    info = await fs.lstat(destinoComando);
+  } catch (erro) {
+    if (erro.code === 'ENOENT') return null;
+    throw erro;
+  }
+  if (!info.isSymbolicLink()) return { tipo: 'outro' };
+  const alvo = await fs.readlink(destinoComando);
+  return { tipo: 'link', alvo: path.resolve(path.dirname(destinoComando), alvo) };
+}
+
+async function instalarComando() {
+  const existente = await lerComando();
+  const acao = acaoInstalarComando({ existente, origem: origemComando });
+  if (acao === 'conflito') {
+    console.warn(
+      `Aviso: já existe ${destinoComando} e não é um link para um scripts/prompt-library.mjs.` +
+        ' Nada foi alterado; o comando `prompt-library` não foi instalado.',
+    );
+  } else if (acao === 'nada') {
+    console.log(`Nada mudou: o comando ${destinoComando} já aponta para cá.`);
+  } else {
+    await fs.mkdir(dirBin, { recursive: true });
+    if (acao === 'refazer') await fs.rm(destinoComando);
+    await fs.symlink(origemComando, destinoComando);
+    console.log(
+      `${acao === 'criar' ? 'Comando criado' : 'Comando atualizado'}: ${destinoComando} → ${origemComando}`,
+    );
+  }
+  const noPath = (process.env.PATH ?? '')
+    .split(path.delimiter)
+    .some((dir) => dir && path.resolve(dir) === dirBin);
+  if (!noPath) {
+    console.warn(
+      `Aviso: ${dirBin} não está no PATH; adicione-o para usar o comando \`prompt-library\`.`,
+    );
+  }
+  return acao !== 'conflito';
+}
+
+async function removerComando() {
+  const existente = await lerComando();
+  const acao = acaoRemoverComando({ existente });
+  if (acao === 'apagar') {
+    await fs.rm(destinoComando);
+    console.log(`Comando removido (${destinoComando}).`);
+  } else if (acao === 'alheio') {
+    console.warn(`Aviso: ${destinoComando} não é um link nosso. Nada foi alterado nele.`);
+  }
+}
+
 function construir() {
   console.log('Build não encontrado; rodando `npm run build`...');
   const r = spawnSync('npm', ['run', 'build'], { cwd: repo, stdio: 'inherit' });
@@ -122,13 +185,15 @@ async function instalar() {
     else systemctl(['start', servico]);
     console.log(`Serviço ${servico} ${ativo ? 'reiniciado' : 'iniciado'}.`);
   }
-  console.log(`\nApp: ${URL_APP}`);
+  const comandoOk = await instalarComando();
+  console.log(comandoOk ? '\nAbra com: prompt-library' : `\nApp: ${URL_APP}`);
   console.log(`Logs: journalctl --user -u ${servico} -f`);
   if (vault) console.log(`Vault: ${vault}`);
   return 0;
 }
 
 async function remover() {
+  await removerComando();
   const atual = await lerSeExistir(destino);
   if (atual === null) {
     console.log(`O serviço não está instalado (${destino} não existe).`);
