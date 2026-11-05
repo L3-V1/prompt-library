@@ -1,8 +1,14 @@
 import { markdown } from '@codemirror/lang-markdown';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
-import { EditorState, type Extension } from '@codemirror/state';
-import { EditorView, keymap, placeholder as placeholderCm } from '@codemirror/view';
+import { EditorState, StateEffect, StateField, type Extension } from '@codemirror/state';
+import {
+  Decoration,
+  EditorView,
+  keymap,
+  placeholder as placeholderCm,
+  type DecorationSet,
+} from '@codemirror/view';
 import { tags as t } from '@lezer/highlight';
 import { basicSetup } from 'codemirror';
 import { useEffect, useRef, type RefObject } from 'react';
@@ -42,6 +48,11 @@ const tema = EditorView.theme({
     border: '1px solid var(--borda)',
     color: 'var(--texto)',
   },
+  '.cm-destaque': {
+    backgroundColor: 'color-mix(in srgb, var(--terracota) 28%, transparent)',
+    borderRadius: '2px',
+    boxShadow: '0 0 0 1px color-mix(in srgb, var(--terracota) 55%, transparent)',
+  },
   '.cm-foldPlaceholder': {
     backgroundColor: 'var(--realce)',
     border: 'none',
@@ -65,6 +76,32 @@ const realce = HighlightStyle.define([
   { tag: [t.comment], color: 'var(--texto-suave)', fontStyle: 'italic' },
   { tag: [t.typeName, t.className, t.propertyName], color: 'var(--texto)', fontWeight: '600' },
 ]);
+
+/** Trecho destacado no texto (a Sugestão sob o mouse ou o foco). */
+export interface Destaque {
+  inicio: number;
+  fim: number;
+}
+
+const definirDestaque = StateEffect.define<Destaque | null>();
+const marcaDestaque = Decoration.mark({ class: 'cm-destaque' });
+
+const campoDestaque = StateField.define<DecorationSet>({
+  create: () => Decoration.none,
+  update(decoracoes, tr) {
+    let novas = decoracoes.map(tr.changes);
+    for (const efeito of tr.effects) {
+      if (!efeito.is(definirDestaque)) continue;
+      const d = efeito.value;
+      novas =
+        d && d.fim > d.inicio
+          ? Decoration.set([marcaDestaque.range(d.inicio, d.fim)])
+          : Decoration.none;
+    }
+    return novas;
+  },
+  provide: (campo) => EditorView.decorations.from(campo),
+});
 
 interface Callbacks {
   onMudar: (valor: string) => void;
@@ -92,6 +129,7 @@ function extensoes(
     syntaxHighlighting(realce),
     EditorView.lineWrapping,
     tema,
+    campoDestaque,
     EditorView.contentAttributes.of({ 'aria-label': rotulo }),
     EditorView.updateListener.of((u) => {
       if (u.docChanged) callbacks.current.onMudar(u.state.doc.toString());
@@ -112,6 +150,7 @@ export function Editor({
   onSalvar,
   placeholder,
   rotulo,
+  destaque,
 }: {
   /** Identidade do documento; mudar zera o histórico. */
   documento: string;
@@ -120,6 +159,8 @@ export function Editor({
   onSalvar: () => void;
   placeholder?: string;
   rotulo: string;
+  /** Trecho a destacar e mostrar na tela; `null` ou ausente apaga o destaque. */
+  destaque?: Destaque | null;
 }) {
   const hospedeiro = useRef<HTMLDivElement>(null);
   const vista = useRef<EditorView | null>(null);
@@ -158,6 +199,23 @@ export function Editor({
     const atual = v.state.doc.toString();
     if (atual !== valor) v.dispatch({ changes: { from: 0, to: atual.length, insert: valor } });
   }, [valor]);
+
+  // Destaque: decoration no trecho e rolagem até ele.
+  const inicio = destaque?.inicio ?? null;
+  const fim = destaque?.fim ?? null;
+  useEffect(() => {
+    const v = vista.current;
+    if (!v) return;
+    const tamanho = v.state.doc.length;
+    if (inicio === null || fim === null || inicio > tamanho) {
+      v.dispatch({ effects: definirDestaque.of(null) });
+      return;
+    }
+    const d = { inicio, fim: Math.min(fim, tamanho) };
+    v.dispatch({
+      effects: [definirDestaque.of(d), EditorView.scrollIntoView(d.inicio, { y: 'center' })],
+    });
+  }, [inicio, fim, documento, valor]);
 
   return <div ref={hospedeiro} className="h-full min-h-0 overflow-hidden" />;
 }

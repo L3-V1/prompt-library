@@ -306,3 +306,45 @@ Registro cronológico das decisões tomadas no projeto. Seções mais recentes n
 87. **Diálogos são o `<dialog>` nativo com `showModal()` (foco preso, Esc, backdrop), e o foco inicial vem de `data-autofocus`, aplicado depois do `showModal`.**
     - Por quê: o `autoFocus` do React roda antes do `showModal` do efeito e se perde.
     - Descartadas: bibliotecas de diálogo (Radix, Headless UI).
+
+## 2026-11-04: M5, Análise
+
+### Decisões
+
+88. **A Análise vale só para o corpo do Prompt.** Título, Tags, Favorito e Coleção ficam de fora; durante a Análise, título, Tags, Versões/restaurar e Salvar ficam travados, enquanto Favorito, Coleção, Copiar e Excluir continuam livres.
+
+89. **Modelo: `Analise { promptId, baseHash, corpoOriginal, rascunho, instrucao, modelo, sugestoes, execucao, erro, ultimaExecucao?, criadaEm, atualizadaEm }` e `Sugestao { id, justificativa, trechoOriginal, trechoNovo, status, inicio }`, persistidos em `Prompts/.analises/<promptId>.json` (gravação atômica, leitura validada com zod).** Uma Análise por Prompt.
+    - `aceita` e `rejeitada` são decisões gravadas; `pendente` e `desatualizada` saem do Rascunho e são recalculadas a cada mudança dele.
+    - Um JSON ilegível vira erro claro (409 `analise_invalida`) e nunca é sobrescrito; só Descartar o apaga.
+
+90. **A Sugestão é localizada por busca exata, usando o offset `inicio` como pista: se o trecho está na pista, fica; senão, vale a ocorrência mais próxima dela; sem ocorrência, a Sugestão fica `desatualizada` (`inicio: null`).** A cada edição, a pista é deslocada pela edição `{ pos, removidos, inseridos }` (conhecida ao aceitar; inferida pelo prefixo e sufixo comuns no `PUT` do Rascunho). Uma edição dentro do trecho o desatualiza; desfazer a edição faz a Sugestão voltar a `pendente`.
+    - Aceitar só vale para `pendente`; uma Sugestão sobreposta à aceita perde o trecho e fica desatualizada. Rejeitar vale para `pendente` e `desatualizada`.
+
+91. **Sugestões geradas cujo trecho não existe no Rascunho são descartadas, assim como as que não mudam nada e as que repetem uma rejeitada; o total aparece no painel.** Regenerar tudo mantém as aceitas e as rejeitadas e troca as pendentes e desatualizadas; regenerar uma troca só ela, na mesma posição da lista.
+    - As rejeitadas vão no texto mandado ao Claude ao regenerar, para não serem repetidas. Por isso ficam na lista depois de regenerar tudo (o plano previa manter só as aceitas).
+
+92. **Pastas e identificadores da Análise em pt-BR: `src/core/analise/`, `src/server/analise/`, `rotas/analise.ts` (e não `analysis/`, como no roadmap; decisão 44).**
+
+93. **O executor é um adaptador injetável (`ExecutorClaude`); o real faz `spawn` do binário de `PROMPT_LIBRARY_CLAUDE` (padrão `claude`) com as flags da decisão 41, o `--json-schema` gerado por `z.toJSONSchema` e o prompt logo depois do `-p`.**
+    - Timeout de 300 s: SIGTERM e, 5 s depois, SIGKILL; o mesmo ao cancelar ou descartar. Ao desligar o servidor, os jobs são abortados.
+    - Um pedido acima de 100 KB falha antes do spawn: o Linux limita um único argumento a 128 KiB.
+    - O `--json-schema` é gerado em draft-07 e sem a chave `$schema`: o `claude` recusa o `$schema` draft 2020-12 que o zod põe por padrão ("no schema with key or ref").
+    - `CLAUDECODE` e `CLAUDE_CODE_ENTRYPOINT` não passam ao processo filho, para o servidor funcionar mesmo iniciado de dentro de uma sessão do Claude Code.
+    - Erros em pt-BR: binário ausente ("Claude Code não encontrado…"), timeout, código diferente de 0 (com o `result` ou o fim do stderr), JSON inválido, `is_error`/`subtype` diferente de `success` e saída fora do schema.
+
+94. **As escritas de cada Prompt (rotas e fim de job) passam por uma fila própria (cadeia de promises), e os jobs vivos ficam num `Map` com `AbortController`.** Um job que termina depois de cancelado ou descartado é ignorado. Uma `execucao` gravada sem job vivo é de antes de um reinício e vira o erro "A execução foi interrompida (servidor reiniciado).", com Tentar de novo.
+    - Com um job rodando, regenerar e concluir respondem 409 `analise_em_execucao`; iniciar com uma Análise já existente, 409 `analise_existente`.
+
+95. **Novo evento SSE `analise`: `{ promptId, analise }` (`null` ao concluir ou descartar), emitido a cada gravação.** O navegador grava o estado no cache do TanStack Query (`['analise', id]`) em vez de invalidar, ignorando um evento mais antigo que o do cache.
+
+96. **O Rascunho é editado no editor principal (documento `id:analise`), e o painel lateral só tem as Sugestões.** A tela é a dona do texto: as edições vão por `PUT .../rascunho` com espera de 400 ms; antes de cada ação (e no Ctrl+S, que mostra "Rascunho salvo" sem criar Versão) o envio pendente é feito. O texto do servidor só entra ao abrir a Análise e com a resposta das ações. Trocar de Prompt ou fechar a aba manda o que faltar (`fetch` com `keepalive`).
+    - Iniciar fica bloqueado com alterações não salvas no Prompt ("salve ou descarte antes").
+    - Passar o mouse ou focar um card destaca o trecho no editor (decoration do CodeMirror) e rola até ele.
+
+97. **O progresso mostra só a fase ("Gerando Sugestões…" com o tempo decorrido), com `--output-format json`.** O streaming (`stream-json`) ficou fora do M5.
+
+98. **Concluir grava o Rascunho como corpo por `acervo.salvar(..., baseHash, 'analise')`: uma única Versão `analise`, e o JSON é apagado.** Se o Prompt mudou fora desde o início, responde o 409 de conflito com `diff(rascunho, disco)`, e o modal oferece Ver diferenças, Cancelar (a Análise continua) e Sobrescrever (conclui com o hash do disco). Se só os metadados mudaram (corpo igual ao `corpoOriginal`, por exemplo Favorito), conclui sem conflito. Uma faixa avisa quando o corpo no disco mudou durante a Análise.
+
+99. **Excluir um Prompt descarta a Análise dele.**
+
+100.  **O SSE se recupera de um reinício do servidor: o `ping` passou de 30 s para 15 s (revê a decisão 68), e o navegador recria o `EventSource` quando ele fecha de vez ou quando fica 25 s sem nada.** Por quê: no dev, o proxy do Vite segura a conexão depois que o servidor cai (o navegador não vê erro) e responde 502 às reconexões (o `EventSource` desiste com erro HTTP); sem isso, a tela ficava em "Gerando…" e nunca mostrava a execução interrompida.

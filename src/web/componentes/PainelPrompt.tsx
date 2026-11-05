@@ -1,6 +1,8 @@
 import { diffLines } from 'diff';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { localizar } from '../../core/analise/regras';
+import { concluirAnalise, useAnalise, type Sugestao } from '../dados/analise';
 import { ConflitoApi, ErroApi, mensagemDeErro, type Prompt } from '../dados/cliente';
 import {
   copiarPrompt,
@@ -28,13 +30,15 @@ import {
   type Reacao,
 } from '../edicao';
 import { abrirPrompt, fecharPainel, navegacaoAtual, registrarProtecao } from '../navegacao';
+import { useRascunhoAnalise } from '../rascunho-analise';
 import { SEM_COLECAO, TECLA_MOD } from '../textos';
 import { CampoTags } from './CampoTags';
 import { Confirmacao } from './Confirmacao';
-import { Editor } from './Editor';
+import { Editor, type Destaque } from './Editor';
 import { EstadoVazio } from './EstadoVazio';
 import { Icone } from './Icone';
 import { ModalConflito, type DadosConflito } from './ModalConflito';
+import { PainelAnalise } from './PainelAnalise';
 import { PainelVersoes } from './PainelVersoes';
 import { toast } from './Toaster';
 
@@ -106,6 +110,28 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
   const { base, rascunho } = estado;
   const temPendencias = pendente(estado);
 
+  // --- Análise (M5): com uma aberta, o editor mostra o Rascunho dela ---
+  const consultaAnalise = useAnalise(id);
+  const analise = consultaAnalise.data ?? null;
+  const emAnalise = analise !== null;
+  const rascunhoAnalise = useRascunhoAnalise(id, analise);
+  const [painelAnalise, setPainelAnalise] = useState(false);
+  const [sugestaoDestacada, setSugestaoDestacada] = useState<Sugestao | null>(null);
+  const [concluindo, setConcluindo] = useState(false);
+  const concluindoRef = useRef(false);
+  const [conflitoAnalise, setConflitoAnalise] = useState<
+    (DadosConflito & { atual: Prompt }) | null
+  >(null);
+  // A Análise acabou (concluída ou descartada, aqui ou em outra aba): o painel fecha.
+  const [tinhaAnalise, setTinhaAnalise] = useState(emAnalise);
+  if (tinhaAnalise !== emAnalise) {
+    setTinhaAnalise(emAnalise);
+    if (!emAnalise) {
+      setPainelAnalise(false);
+      setSugestaoDestacada(null);
+    }
+  }
+
   /** Aplica a reação a uma versão do Prompt vinda do servidor. */
   const aplicar = useCallback(
     (reacao: Reacao<Estado, Prompt>) => {
@@ -132,7 +158,7 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
   useEffect(
     () =>
       ouvirEventos((evento) => {
-        if (evento.tipo === 'diretrizes') return;
+        if (evento.tipo === 'diretrizes' || evento.tipo === 'analise') return;
         if (
           evento.tipo === 'acervo' &&
           !evento.dados.alterados.includes(id) &&
@@ -140,8 +166,12 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
         ) {
           return;
         }
+        // Concluir a Análise grava o Prompt; quem atualiza a tela é a resposta.
+        if (concluindoRef.current) return;
         relerPrompt(id).then(
-          (novo) => aplicar(reagirAMudancaExterna(estadoRef.current, novo)),
+          (novo) => {
+            if (!concluindoRef.current) aplicar(reagirAMudancaExterna(estadoRef.current, novo));
+          },
           () => undefined,
         );
       }),
@@ -191,17 +221,47 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
     });
   }, [temPendencias, salvar, atualizar]);
 
+  /** Na Análise, o Ctrl+S só grava o Rascunho (sem Versão). */
+  const { flush: flushRascunho } = rascunhoAnalise;
+  const salvarRascunho = useCallback(async () => {
+    if (await flushRascunho()) toast.sucesso('Rascunho salvo');
+  }, [flushRascunho]);
+  const salvarAtalho = emAnalise ? salvarRascunho : salvar;
+
   // Ctrl+S com o foco fora do editor (o CodeMirror trata o seu e marca `defaultPrevented`).
   useEffect(() => {
     const aoTeclar = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && !e.defaultPrevented) {
         e.preventDefault();
-        void salvar();
+        void salvarAtalho();
       }
     };
     window.addEventListener('keydown', aoTeclar);
     return () => window.removeEventListener('keydown', aoTeclar);
-  }, [salvar]);
+  }, [salvarAtalho]);
+
+  /** Grava o Rascunho no Prompt (Versão `analise`); `baseHash` sobrescreve depois do conflito. */
+  async function concluir(baseHash?: string) {
+    if (concluindoRef.current) return;
+    concluindoRef.current = true;
+    setConcluindo(true);
+    try {
+      if (!(await rascunhoAnalise.flush())) return;
+      const novo = await concluirAnalise(id, baseHash);
+      atualizar(iniciar(novo));
+      setAviso(null);
+      toast.sucesso('Análise concluída; o Prompt ganhou uma Versão nova');
+    } catch (erro) {
+      if (erro instanceof ConflitoApi) {
+        setConflitoAnalise({ atual: erro.atual as Prompt, diff: erro.diff });
+      } else {
+        toast.erro(`Não foi possível concluir: ${mensagemDeErro(erro)}`);
+      }
+    } finally {
+      concluindoRef.current = false;
+      setConcluindo(false);
+    }
+  }
 
   const mudarRascunho = (parcial: Partial<Estado['rascunho']>) =>
     atualizar({ ...estadoRef.current, rascunho: { ...estadoRef.current.rascunho, ...parcial } });
@@ -302,6 +362,19 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
     if (await salvar()) return;
   }
 
+  let destaque: Destaque | null = null;
+  if (emAnalise && sugestaoDestacada && rascunhoAnalise.texto !== null) {
+    const inicio = localizar(
+      rascunhoAnalise.texto,
+      sugestaoDestacada.trechoOriginal,
+      sugestaoDestacada.inicio,
+    );
+    if (inicio !== null) {
+      destaque = { inicio, fim: inicio + sugestaoDestacada.trechoOriginal.length };
+    }
+  }
+  const promptMudouFora = emAnalise && base.corpo !== analise.corpoOriginal;
+
   const favorito = favoritoOtimista ?? base.favorito;
   const nomesColecoes = (colecoes.data ?? []).flatMap((c) => (c.nome === null ? [] : [c.nome]));
   if (base.colecao && !nomesColecoes.includes(base.colecao)) nomesColecoes.push(base.colecao);
@@ -314,9 +387,11 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
           <input
             value={rascunho.titulo}
             onChange={(e) => mudarRascunho({ titulo: e.target.value })}
+            readOnly={emAnalise}
+            title={emAnalise ? 'O título fica travado durante a Análise' : undefined}
             aria-label="Título do Prompt"
             placeholder="Sem título"
-            className="min-w-0 flex-1 rounded-md bg-transparent px-1 py-1 font-serif text-xl font-semibold placeholder:text-suave hover:bg-realce/60 focus:bg-realce/60 focus:outline-none"
+            className="min-w-0 flex-1 read-only:hover:bg-transparent read-only:focus:bg-transparent rounded-md bg-transparent px-1 py-1 font-serif text-xl font-semibold placeholder:text-suave hover:bg-realce/60 focus:bg-realce/60 focus:outline-none"
           />
           <button
             type="button"
@@ -327,6 +402,21 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
             onClick={() => void alternarFavorito()}
           >
             <Icone nome="estrela" preenchido={favorito} className="size-[18px]" />
+          </button>
+          <button
+            type="button"
+            className={`botao-icone ${painelAnalise || emAnalise ? 'text-terracota' : ''} ${painelAnalise ? 'bg-realce' : ''}`}
+            aria-label="Analisar"
+            aria-pressed={painelAnalise}
+            title={
+              temPendencias && !emAnalise
+                ? 'Analisar: salve ou descarte as alterações antes'
+                : 'Analisar com o Claude'
+            }
+            disabled={temPendencias && !emAnalise}
+            onClick={() => setPainelAnalise((v) => !v)}
+          >
+            <Icone nome="faisca" className="size-[18px]" />
           </button>
           <button
             type="button"
@@ -342,7 +432,8 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
             className={`botao-icone ${versoesAbertas ? 'bg-realce text-texto' : ''}`}
             aria-label="Versões"
             aria-pressed={versoesAbertas}
-            title="Versões"
+            title={emAnalise ? 'Versões: travadas durante a Análise' : 'Versões'}
+            disabled={emAnalise}
             onClick={() => setVersoesAbertas((v) => !v)}
           >
             <Icone nome="historico" className="size-[18px]" />
@@ -381,6 +472,7 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
               tags={rascunho.tags}
               sugestoes={(tags.data ?? []).map((t) => t.tag)}
               onMudar={(novas) => mudarRascunho({ tags: novas })}
+              somenteLeitura={emAnalise}
             />
           </div>
           <div className="ml-auto flex items-center gap-3">
@@ -390,15 +482,17 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
                 Alterações não salvas
               </span>
             )}
-            <button
-              type="button"
-              className="botao-primario"
-              disabled={!temPendencias || salvando}
-              onClick={() => void salvar()}
-              title={`Salvar (${TECLA_MOD}+S)`}
-            >
-              {salvando ? 'Salvando…' : 'Salvar'}
-            </button>
+            {!emAnalise && (
+              <button
+                type="button"
+                className="botao-primario"
+                disabled={!temPendencias || salvando}
+                onClick={() => void salvar()}
+                title={`Salvar (${TECLA_MOD}+S)`}
+              >
+                {salvando ? 'Salvando…' : 'Salvar'}
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -433,22 +527,92 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
         </div>
       )}
 
-      <div className="relative min-h-0 flex-1">
-        <Editor
-          documento={id}
-          valor={rascunho.corpo}
-          onMudar={(corpo) => mudarRascunho({ corpo })}
-          onSalvar={() => void salvar()}
-          placeholder="Escreva o Prompt…"
-          rotulo="Texto do Prompt"
-        />
-        {versoesAbertas && (
-          <PainelVersoes
-            id={id}
-            pendente={temPendencias}
-            onRestaurar={restaurar}
-            onFechar={() => setVersoesAbertas(false)}
-          />
+      {emAnalise && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-borda bg-realce/70 px-6 py-2 text-sm"
+        >
+          <Icone nome="faisca" className="size-4 text-terracota" />
+          <span className="min-w-0 flex-1">
+            <strong className="font-semibold">Análise em andamento.</strong>{' '}
+            <span className="text-suave">
+              Você edita o Rascunho; título, Tags e Versões ficam travados até concluir ou
+              descartar.
+            </span>
+          </span>
+          <button type="button" className="botao lg:hidden" onClick={() => setPainelAnalise(true)}>
+            Sugestões
+          </button>
+        </div>
+      )}
+      {promptMudouFora && (
+        <div
+          role="alert"
+          className="flex items-center gap-3 border-b border-borda bg-perigo-fundo px-6 py-2 text-sm"
+        >
+          <Icone nome="alerta" className="size-4 shrink-0 text-perigo" />
+          <span>
+            O Prompt mudou fora do app depois que a Análise começou. Ao concluir, você poderá ver as
+            diferenças e escolher se sobrescreve.
+          </span>
+        </div>
+      )}
+
+      <div className="relative flex min-h-0 flex-1">
+        <div className="relative min-h-0 min-w-0 flex-1">
+          {emAnalise ? (
+            <Editor
+              documento={`${id}:analise`}
+              valor={rascunhoAnalise.texto ?? ''}
+              onMudar={rascunhoAnalise.mudar}
+              onSalvar={() => void salvarRascunho()}
+              placeholder="O Rascunho está vazio."
+              rotulo="Rascunho da Análise"
+              destaque={destaque}
+            />
+          ) : (
+            <Editor
+              documento={id}
+              valor={rascunho.corpo}
+              onMudar={(corpo) => mudarRascunho({ corpo })}
+              onSalvar={() => void salvar()}
+              placeholder="Escreva o Prompt…"
+              rotulo="Texto do Prompt"
+            />
+          )}
+          {versoesAbertas && !emAnalise && (
+            <PainelVersoes
+              id={id}
+              pendente={temPendencias}
+              onRestaurar={restaurar}
+              onFechar={() => setVersoesAbertas(false)}
+            />
+          )}
+        </div>
+        {(emAnalise || painelAnalise || consultaAnalise.isError) && (
+          <aside
+            aria-label="Análise"
+            className={`z-20 flex min-h-0 flex-col border-l border-borda bg-superficie max-lg:absolute max-lg:inset-y-0 max-lg:right-0 max-lg:w-[min(380px,100%)] max-lg:shadow-flutuante lg:w-[380px] lg:shrink-0 ${
+              painelAnalise ? '' : 'max-lg:hidden'
+            }`}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape' && !e.defaultPrevented) setPainelAnalise(false);
+            }}
+          >
+            <PainelAnalise
+              id={id}
+              analise={analise}
+              carregando={consultaAnalise.isPending}
+              erroLeitura={consultaAnalise.error}
+              podeIniciar={!temPendencias}
+              concluindo={concluindo}
+              antes={rascunhoAnalise.flush}
+              onAdotar={rascunhoAnalise.adotar}
+              onDestacar={setSugestaoDestacada}
+              onConcluir={() => void concluir()}
+              onFechar={() => setPainelAnalise(false)}
+            />
+          </aside>
         )}
       </div>
 
@@ -459,6 +623,18 @@ function EdicaoPrompt({ inicial }: { inicial: Prompt }) {
         onFechar={() => setConflito(null)}
         onRecarregar={() => conflito && recarregarDoDisco(conflito.atual)}
         onSobrescrever={() => conflito && void sobrescrever(conflito)}
+      />
+      <ModalConflito
+        aberto={conflitoAnalise !== null}
+        conflito={conflitoAnalise}
+        titulo="O Prompt mudou fora do app"
+        descricao="O arquivo foi alterado fora do app depois que a Análise começou. Sobrescrever grava o Rascunho por cima do texto no disco; Cancelar mantém a Análise aberta."
+        onFechar={() => setConflitoAnalise(null)}
+        onSobrescrever={() => {
+          const c = conflitoAnalise;
+          setConflitoAnalise(null);
+          if (c) void concluir(c.atual.hash);
+        }}
       />
       <Confirmacao
         aberto={confirmarExclusao}

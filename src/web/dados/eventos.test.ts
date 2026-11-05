@@ -32,4 +32,10 @@ describe('chavesParaInvalidar', () => {
       ['diretrizes'],
     ]);
   });
+
+  it('analise não invalida nada (o evento já traz o estado)', () => {
+    expect(
+      chavesParaInvalidar({ tipo: 'analise', dados: { promptId: 'a', analise: null } }),
+    ).toEqual([]);
+  });
 });

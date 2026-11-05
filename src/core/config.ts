@@ -14,5 +14,6 @@ export function resolverPastas(env: NodeJS.ProcessEnv = process.env): Pastas {
     versoes: path.join(prompts, '.versoes'),
     lixeira: path.join(vault, '.trash'),
     diretrizes: path.join(prompts, '_Diretrizes.md'),
+    analises: path.join(prompts, '.analises'),
   };
 }

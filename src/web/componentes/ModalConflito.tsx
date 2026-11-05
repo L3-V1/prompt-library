@@ -35,6 +35,7 @@ export function ModalConflito({
   aberto,
   conflito,
   titulo,
+  descricao = 'O arquivo foi alterado fora do app (no Obsidian ou por uma Captura) depois que você o abriu. Escolha o que fazer com as suas alterações.',
   onRecarregar,
   onSobrescrever,
   onFechar,
@@ -42,7 +43,9 @@ export function ModalConflito({
   aberto: boolean;
   conflito: DadosConflito | null;
   titulo: string;
-  onRecarregar: () => void;
+  descricao?: string;
+  /** Sem ele, o botão vira "Cancelar" (concluir a Análise: o Rascunho fica). */
+  onRecarregar?: () => void;
   onSobrescrever: () => void;
   onFechar: () => void;
 }) {
@@ -62,10 +65,7 @@ export function ModalConflito({
       className={verDiff ? 'w-[min(72rem,calc(100vw-2rem))]' : 'w-[min(34rem,calc(100vw-2rem))]'}
     >
       <div className="flex min-h-0 flex-col gap-4 px-6 pt-1 pb-5 text-sm">
-        <p className="text-suave">
-          O arquivo foi alterado fora do app (no Obsidian ou por uma Captura) depois que você o
-          abriu. Escolha o que fazer com as suas alterações.
-        </p>
+        <p className="text-suave">{descricao}</p>
         {verDiff && conflito && (
           <>
             {textoIgual ? (
@@ -116,10 +116,11 @@ export function ModalConflito({
           className="botao"
           onClick={() => {
             setVerDiff(false);
-            onRecarregar();
+            if (onRecarregar) onRecarregar();
+            else onFechar();
           }}
         >
-          Recarregar do disco
+          {onRecarregar ? 'Recarregar do disco' : 'Cancelar'}
         </button>
         <button
           type="button"

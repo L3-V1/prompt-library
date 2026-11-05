@@ -1,7 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { criarAcervo, criarDiretrizes, type Prompt } from '../core/index.js';
+import {
+  criarAcervo,
+  criarArmazenamentoAnalises,
+  criarDiretrizes,
+  type Analise,
+  type Prompt,
+} from '../core/index.js';
 import { criarVaultTemporario, limparVaultsTemporarios } from '../core/teste/vault-temporario.js';
+import type { ExecutorClaude } from './analise/claude.js';
+import { criarServicoAnalise } from './analise/servico.js';
 import { criarApp } from './app.js';
 import { criarEventos } from './eventos.js';
 import { criarIndice } from './indice.js';
@@ -16,7 +24,22 @@ async function montar(arquivos: Record<string, string> = {}) {
   const indice = criarIndice(acervo);
   await indice.atualizar();
   const eventos = criarEventos();
-  const app = criarApp({ acervo, indice, diretrizes: criarDiretrizes(vault.pastas), eventos });
+  const diretrizes = criarDiretrizes(vault.pastas);
+  // Executor falso: responde as Sugestões de `respostaClaude` na hora.
+  const respostaClaude = {
+    sugestoes: [] as { justificativa: string; trechoOriginal: string; trechoNovo: string }[],
+  };
+  const executor: ExecutorClaude = () =>
+    Promise.resolve({ saida: respostaClaude, custoUsd: 0.01, duracaoMs: 10, modelo: 'falso' });
+  const analises = criarServicoAnalise({
+    acervo,
+    diretrizes,
+    armazenamento: criarArmazenamentoAnalises(vault.pastas),
+    eventos,
+    executor,
+    pastas: vault.pastas,
+  });
+  const app = criarApp({ acervo, indice, diretrizes, eventos, analises });
   const pedir = (rota: string, init: RequestInit = {}) => app.request(`${BASE}${rota}`, init);
   const json = (
     metodo: string,
@@ -29,7 +52,7 @@ async function montar(arquivos: Record<string, string> = {}) {
       headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify(corpo),
     });
-  return { vault, acervo, indice, eventos, app, pedir, json };
+  return { vault, acervo, indice, eventos, analises, respostaClaude, app, pedir, json };
 }
 
 const PROMPT_A = '---\nid: a\ntitulo: Revisão de código\ntags: [code]\n---\nRevise o código.\n';
@@ -400,6 +423,123 @@ describe('eventos', () => {
     controle.abort();
     await leitor.cancel().catch(() => undefined);
     await vi.waitFor(() => expect(eventos.total()).toBe(0));
+  });
+});
+
+describe('análise', () => {
+  const lerAnalise = async (r: Response) => (await r.json()) as Analise;
+
+  async function pronta(pedir: (rota: string) => Response | Promise<Response>) {
+    return vi.waitFor(async () => {
+      const a = (await (await pedir('/api/prompts/a/analise')).json()) as Analise | null;
+      if (!a || a.execucao) throw new Error('ainda gerando');
+      return a;
+    });
+  }
+
+  it('GET sem Análise é null; Prompt inexistente é 404', async () => {
+    const { pedir } = await montar({ 'Prompts/A.md': PROMPT_A });
+    const r = await pedir('/api/prompts/a/analise');
+    expect(r.status).toBe(200);
+    expect(await r.json()).toBeNull();
+    expect((await pedir('/api/prompts/zzz/analise')).status).toBe(404);
+  });
+
+  it('fluxo: iniciar (202), aceitar, rascunho, concluir', async () => {
+    const { json, pedir, respostaClaude, vault } = await montar({ 'Prompts/A.md': PROMPT_A });
+    respostaClaude.sugestoes = [
+      { justificativa: 'j', trechoOriginal: 'Revise', trechoNovo: 'Analise' },
+    ];
+    const r = await json('POST', '/api/prompts/a/analise', { instrucao: 'x', modelo: 'haiku' });
+    expect(r.status).toBe(202);
+    expect((await lerAnalise(r)).execucao?.tipo).toBe('analise');
+
+    const dupla = await json('POST', '/api/prompts/a/analise', {});
+    expect(dupla.status).toBe(409);
+
+    const a = await pronta(pedir);
+    expect(a.modelo).toBe('haiku');
+    const sid = a.sugestoes[0]!.id;
+    const aceita = await json('POST', `/api/prompts/a/analise/sugestoes/${sid}/aceitar`, {});
+    expect(aceita.status).toBe(200);
+    expect((await lerAnalise(aceita)).rascunho).toBe('Analise o código.\n');
+
+    const outra = await json('POST', `/api/prompts/a/analise/sugestoes/${sid}/aceitar`, {});
+    expect(outra.status).toBe(409);
+    expect(((await outra.json()) as { codigo: string }).codigo).toBe('sugestao_indisponivel');
+
+    const put = await json('PUT', '/api/prompts/a/analise/rascunho', { rascunho: 'Final.\n' });
+    expect((await lerAnalise(put)).rascunho).toBe('Final.\n');
+
+    const fim = await json('POST', '/api/prompts/a/analise/concluir', {});
+    expect(fim.status).toBe(200);
+    expect(((await fim.json()) as Prompt).corpo).toBe('Final.\n');
+    expect(await (await pedir('/api/prompts/a/analise')).json()).toBeNull();
+    expect(
+      (await vault.arquivos('Prompts/.versoes/a')).some((v) => v.endsWith('-analise.md')),
+    ).toBe(true);
+  });
+
+  it('modelo inválido responde 400; sem Análise, 404', async () => {
+    const { json } = await montar({ 'Prompts/A.md': PROMPT_A });
+    const r = await json('POST', '/api/prompts/a/analise', { modelo: 'gpt' });
+    expect(r.status).toBe(400);
+    expect(((await r.json()) as { erro: string }).erro).toMatch(/^modelo: /);
+    const sem = await json('POST', '/api/prompts/a/analise/cancelar', {});
+    expect(sem.status).toBe(404);
+    expect(((await sem.json()) as { codigo: string }).codigo).toBe('analise_nao_encontrada');
+  });
+
+  it('concluir com o Prompt alterado fora: 409 com atual e diff do Rascunho', async () => {
+    const { json, pedir, vault } = await montar({ 'Prompts/A.md': PROMPT_A });
+    await json('POST', '/api/prompts/a/analise', {});
+    await pronta(pedir);
+    await json('PUT', '/api/prompts/a/analise/rascunho', { rascunho: 'Meu.\n' });
+    await vault.escrever('Prompts/A.md', PROMPT_A + 'Do Obsidian.\n');
+    const r = await json('POST', '/api/prompts/a/analise/concluir', {});
+    expect(r.status).toBe(409);
+    const corpo = (await r.json()) as { codigo: string; atual: Prompt; diff: { value: string }[] };
+    expect(corpo.codigo).toBe('conflito');
+    expect(corpo.diff.map((d) => d.value).join('')).toContain('Meu.');
+    const forcar = await json('POST', '/api/prompts/a/analise/concluir', {
+      baseHash: corpo.atual.hash,
+    });
+    expect(forcar.status).toBe(200);
+  });
+
+  it('DELETE descarta (204) e excluir o Prompt apaga a Análise', async () => {
+    const { json, pedir, vault } = await montar({ 'Prompts/A.md': PROMPT_A });
+    await json('POST', '/api/prompts/a/analise', {});
+    await pronta(pedir);
+    const d = await pedir('/api/prompts/a/analise', { method: 'DELETE' });
+    expect(d.status).toBe(204);
+    expect(await vault.existe('Prompts/.analises/a.json')).toBe(false);
+    expect(await vault.ler('Prompts/A.md')).toBe(PROMPT_A);
+
+    await json('POST', '/api/prompts/a/analise', {});
+    await pronta(pedir);
+    expect((await pedir('/api/prompts/a', { method: 'DELETE' })).status).toBe(204);
+    expect(await vault.existe('Prompts/.analises/a.json')).toBe(false);
+  });
+
+  it('o SSE repassa o evento analise', async () => {
+    const { pedir, eventos, json } = await montar({ 'Prompts/A.md': PROMPT_A });
+    const controle = new AbortController();
+    const r = await pedir('/api/eventos', { signal: controle.signal });
+    const leitor = r.body?.pipeThrough(new TextDecoderStream()).getReader();
+    if (!leitor) throw new Error('sem corpo');
+    await vi.waitFor(() => expect(eventos.total()).toBe(1));
+    await json('POST', '/api/prompts/a/analise', {});
+    let recebido = '';
+    while (!recebido.includes('event: analise')) {
+      const { value, done } = await leitor.read();
+      if (done) throw new Error('stream acabou');
+      recebido += value;
+    }
+    expect(recebido).toMatch(/data: \{"promptId":"a","analise":\{/);
+    await pronta(pedir);
+    controle.abort();
+    await leitor.cancel().catch(() => undefined);
   });
 });
 

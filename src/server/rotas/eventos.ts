@@ -4,7 +4,7 @@ import { streamSSE } from 'hono/streaming';
 import type { Deps } from '../deps.js';
 import type { Evento } from '../eventos.js';
 
-export const INTERVALO_PING_MS = 30_000;
+export const INTERVALO_PING_MS = 15_000;
 
 export function rotasEventos({ eventos }: Deps) {
   return new Hono().get('/', (c) =>

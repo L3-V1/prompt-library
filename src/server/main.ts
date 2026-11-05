@@ -1,7 +1,14 @@
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 
-import { criarAcervo, criarDiretrizes, resolverPastas } from '../core/index.js';
+import {
+  criarAcervo,
+  criarArmazenamentoAnalises,
+  criarDiretrizes,
+  resolverPastas,
+} from '../core/index.js';
+import { criarExecutorClaude } from './analise/claude.js';
+import { criarServicoAnalise } from './analise/servico.js';
 import { criarApp, HOST, PORTA } from './app.js';
 import { criarEventos } from './eventos.js';
 import { criarIndice } from './indice.js';
@@ -18,7 +25,16 @@ indice.ouvir((mudancas) => eventos.emitir({ tipo: 'acervo', dados: mudancas }));
 const observador = await criarObservador({ pastas, indice, diretrizes, eventos });
 await indice.atualizar();
 
-const app = criarApp({ acervo, indice, diretrizes, eventos });
+const analises = criarServicoAnalise({
+  acervo,
+  diretrizes,
+  armazenamento: criarArmazenamentoAnalises(pastas),
+  eventos,
+  executor: criarExecutorClaude({ binario: process.env['PROMPT_LIBRARY_CLAUDE'] || 'claude' }),
+  pastas,
+});
+
+const app = criarApp({ acervo, indice, diretrizes, eventos, analises });
 
 if (process.env['NODE_ENV'] === 'production') {
   app.use('/*', serveStatic({ root: './dist/web' }));
@@ -30,6 +46,8 @@ const servidor = serve({ fetch: app.fetch, hostname: HOST, port: PORTA }, (info)
 });
 
 async function desligar() {
+  // Mata os `claude` em andamento; as Análises voltam como interrompidas na próxima partida.
+  analises.encerrar();
   await observador.fechar();
   servidor.close();
   // Conexões SSE abertas seguram o `close`; não há estado a gravar.

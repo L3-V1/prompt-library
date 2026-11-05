@@ -24,6 +24,9 @@ const CAMINHOS = {
   salvar: 'M5 3h11l3 3v15H5zM8 3v5h7M8 21v-7h8v7',
   mais_opcoes: 'M12 6h.01M12 12h.01M12 18h.01',
   diff: 'M12 3v18M5 8h4M7 6v4M15 16h4',
+  faisca:
+    'M12 3l1.8 4.9L19 9.7l-5.2 1.8L12 16.5l-1.8-5L5 9.7l5.2-1.8zM18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z',
+  recarregar: 'M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7',
 } as const;
 
 export type NomeIcone = keyof typeof CAMINHOS;

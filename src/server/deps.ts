@@ -1,4 +1,5 @@
 import type { Acervo, Diretrizes } from '../core/index.js';
+import type { ServicoAnalise } from './analise/servico.js';
 import type { Eventos } from './eventos.js';
 import type { Indice } from './indice.js';
 
@@ -8,4 +9,5 @@ export interface Deps {
   indice: Indice;
   diretrizes: Diretrizes;
   eventos: Eventos;
+  analises: ServicoAnalise;
 }
