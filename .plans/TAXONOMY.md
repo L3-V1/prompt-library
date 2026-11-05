@@ -33,3 +33,5 @@ features, fixes, refactors, spikes, docs, chores
         - [M3: API do servidor](roadmaps/roadmap-01/milestones/milestone-03/milestone-03-api-do-servidor.md)
       - **milestone-04/**
         - [M4: Interface base](roadmaps/roadmap-01/milestones/milestone-04/milestone-04-interface-base.md)
+      - **milestone-05/**
+        - [M5: Análise (Aprimoramento assistido)](roadmaps/roadmap-01/milestones/milestone-05/milestone-05-analise-aprimoramento-assistido.md)
