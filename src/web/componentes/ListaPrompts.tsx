@@ -49,7 +49,7 @@ export function ListaPrompts({ onAbrirMenu }: { onAbrirMenu: () => void }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-col gap-2 border-b border-borda px-3 pt-3 pb-3">
+      <div className="flex flex-col gap-3 border-b border-borda px-4 pt-5 pb-4">
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -59,16 +59,16 @@ export function ListaPrompts({ onAbrirMenu }: { onAbrirMenu: () => void }) {
           >
             <Icone nome="menu" />
           </button>
-          <h2 className="min-w-0 flex-1 truncate px-1 font-serif text-base font-semibold">
+          <h2 className="titulo-painel min-w-0 flex-1 truncate leading-none">
             {tituloDoFiltro(nav)}
           </h2>
-          <span className="px-1 text-xs text-suave">{consulta.data && prompts.length}</span>
+          <span className="text-xs text-suave tabular-nums">{consulta.data && prompts.length}</span>
         </div>
         <label className="relative block">
           <span className="sr-only">Buscar Prompts</span>
           <Icone
             nome="busca"
-            className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-suave"
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-suave"
           />
           <input
             type="search"
@@ -83,7 +83,7 @@ export function ListaPrompts({ onAbrirMenu }: { onAbrirMenu: () => void }) {
               }
             }}
             placeholder={`Buscar (${TECLA_MOD}+K copia)`}
-            className="campo pl-8"
+            className="campo pl-9"
           />
         </label>
       </div>
@@ -109,9 +109,9 @@ export function ListaPrompts({ onAbrirMenu }: { onAbrirMenu: () => void }) {
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {consulta.isPending ? (
-          <p className="p-4 text-sm text-suave">Carregando…</p>
+          <p className="px-4 py-3 text-sm text-suave">Carregando…</p>
         ) : consulta.isError ? (
-          <p className="p-4 text-sm text-perigo">{mensagemDeErro(consulta.error)}</p>
+          <p className="px-4 py-3 text-sm text-perigo">{mensagemDeErro(consulta.error)}</p>
         ) : prompts.length === 0 ? (
           semFiltro ? (
             <EstadoVazio icone="inbox" titulo="O acervo está vazio">
@@ -132,7 +132,7 @@ export function ListaPrompts({ onAbrirMenu }: { onAbrirMenu: () => void }) {
         ) : (
           <ul
             ref={lista}
-            className="flex flex-col gap-0.5 p-2"
+            className="flex flex-col gap-1 p-2"
             onKeyDown={(e) => {
               if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
               const botoes = [
@@ -152,9 +152,7 @@ export function ListaPrompts({ onAbrirMenu }: { onAbrirMenu: () => void }) {
                     data-item
                     aria-current={aberto}
                     onClick={() => abrirPrompt(p.id)}
-                    className={`flex w-full flex-col gap-1 rounded-lg px-3 py-2.5 text-left transition-colors ${
-                      aberto ? 'bg-realce' : 'hover:bg-realce/60'
-                    }`}
+                    className="item flex w-full flex-col gap-1.5 text-left"
                   >
                     <span className="flex w-full items-start gap-2">
                       <span className="min-w-0 flex-1 truncate text-sm font-medium">

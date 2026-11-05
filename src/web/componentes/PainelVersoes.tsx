@@ -47,15 +47,15 @@ export function PainelVersoes({
   return (
     <aside
       aria-label="Versões"
-      className="absolute inset-0 z-20 flex flex-col border-l border-borda bg-superficie shadow-flutuante lg:left-auto lg:w-[min(64rem,100%)]"
+      className="@container absolute inset-0 z-20 flex flex-col bg-superficie shadow-flutuante lg:left-auto lg:w-[min(64rem,100%)]"
       onKeyDown={(e) => {
         if (e.key === 'Escape' && !confirmar) onFechar();
       }}
     >
-      <div className="flex items-center gap-2 border-b border-borda px-4 py-3">
+      <div className="cabecalho-painel">
         <Icone nome="historico" className="size-4 text-terracota" />
-        <h2 className="font-serif text-base font-semibold">Versões</h2>
-        <span className="text-xs text-suave">{lista.length > 0 && `(${lista.length})`}</span>
+        <h2 className="titulo-painel">Versões</h2>
+        <span className="text-xs text-suave tabular-nums">{lista.length > 0 && lista.length}</span>
         <button
           type="button"
           className="botao-icone ml-auto"
@@ -67,16 +67,16 @@ export function PainelVersoes({
         </button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col @2xl:flex-row">
         {/* Sem Versões, a lista some e fica só o estado vazio ao lado. */}
         <ol
-          className={`max-h-48 shrink-0 overflow-y-auto border-b border-borda p-2 md:max-h-none md:w-64 md:border-r md:border-b-0 ${
+          className={`flex max-h-48 shrink-0 flex-col gap-1 overflow-y-auto border-b border-borda p-2 @2xl:max-h-none @2xl:w-64 @2xl:border-r @2xl:border-b-0 ${
             versoes.isSuccess && lista.length === 0 ? 'hidden' : ''
           }`}
         >
-          {versoes.isPending && <li className="p-3 text-sm text-suave">Carregando…</li>}
+          {versoes.isPending && <li className="px-3 py-2.5 text-sm text-suave">Carregando…</li>}
           {versoes.isError && (
-            <li className="p-3 text-sm text-perigo">{mensagemDeErro(versoes.error)}</li>
+            <li className="px-3 py-2.5 text-sm text-perigo">{mensagemDeErro(versoes.error)}</li>
           )}
           {lista.map((v, i) => (
             <li key={v.id}>
@@ -84,14 +84,12 @@ export function PainelVersoes({
                 type="button"
                 aria-current={v.id === escolhida}
                 onClick={() => setEscolhida(v.id)}
-                className={`flex w-full flex-col items-start rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-realce ${
-                  v.id === escolhida ? 'bg-realce' : ''
-                }`}
+                className="item flex w-full flex-col items-start text-left text-sm"
               >
                 <span className="font-medium">
                   {MOTIVOS[v.motivo]}
                   {i === 0 && (
-                    <span className="selo ml-2 bg-elevada text-[11px] font-normal text-suave">
+                    <span className="selo ml-2 bg-realce text-[11px] font-normal text-suave">
                       mais recente
                     </span>
                   )}
@@ -157,7 +155,7 @@ export function PainelVersoes({
               ) : !diff.data ? (
                 <p className="text-sm text-suave">Carregando…</p>
               ) : semDiferencas(diff.data) ? (
-                <p className="rounded-lg border border-borda bg-fundo p-4 text-sm text-suave">
+                <p className="cartao text-sm text-suave">
                   Sem diferenças: {modo === 'atual' ? 'o arquivo atual' : 'a Versão anterior'} é
                   igual a esta Versão.
                 </p>

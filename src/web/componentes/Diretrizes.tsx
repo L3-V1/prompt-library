@@ -34,7 +34,7 @@ export function Diretrizes() {
       </EstadoVazio>
     );
   }
-  return <div className="p-6 text-sm text-suave">Carregando…</div>;
+  return <div className="coluna-folha py-6 text-sm text-suave">Carregando…</div>;
 }
 
 function EdicaoDiretrizes({ inicial }: { inicial: Arquivo }) {
@@ -143,12 +143,13 @@ function EdicaoDiretrizes({ inicial }: { inicial: Arquivo }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-borda px-4 py-3 md:px-6">
+      <header className="cabecalho-folha flex flex-wrap items-center gap-x-3 gap-y-2">
         <BotaoVoltar />
-        <Icone nome="livro" className="size-5 text-terracota" />
         <div className="min-w-0 flex-1">
-          <h2 className="font-serif text-xl font-semibold">Diretrizes</h2>
-          <p className="text-xs text-suave">
+          <h2 className="font-serif text-[1.875rem] leading-tight font-medium tracking-[-0.015em]">
+            Diretrizes
+          </h2>
+          <p className="mt-1 text-xs text-suave">
             Critérios de um bom Prompt, usados pela Análise. Ficam em{' '}
             <code>Prompts/_Diretrizes.md</code>, sem Versões.
           </p>
@@ -172,10 +173,7 @@ function EdicaoDiretrizes({ inicial }: { inicial: Arquivo }) {
         </div>
       </header>
       {aviso && (
-        <div
-          role="alert"
-          className="flex flex-wrap items-center gap-3 border-b border-borda bg-realce px-4 py-2.5 md:px-6 text-sm"
-        >
+        <div role="alert" className="faixa bg-realce/70">
           <Icone nome="alerta" className="size-4 text-terracota" />
           <span className="flex-1">As Diretrizes mudaram no disco.</span>
           <button
@@ -193,7 +191,7 @@ function EdicaoDiretrizes({ inicial }: { inicial: Arquivo }) {
         </div>
       )}
       {vazio && (
-        <div className="border-b border-borda bg-superficie px-4 py-3 md:px-6 text-sm text-suave">
+        <div className="faixa bg-superficie text-suave">
           Escreva aqui os critérios do que você considera um bom Prompt: tom, estrutura, o que nunca
           pode faltar. A Análise vai usá-los para sugerir melhorias.
         </div>

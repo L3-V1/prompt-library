@@ -1,33 +1,58 @@
+@import '@fontsource-variable/newsreader/opsz.css';
+@import '@fontsource-variable/instrument-sans/wght.css';
+@import '@fontsource/ia-writer-quattro/400.css';
+@import '@fontsource/ia-writer-quattro/400-italic.css';
+@import '@fontsource/ia-writer-quattro/700.css';
 @import 'tailwindcss';
 
 @custom-variant dark (&:where([data-tema=escuro], [data-tema=escuro] *));
 
-/* Tokens (decisão 27): terracota e creme no claro, cinzas quentes no escuro. */
+/*
+ * Tokens (decisão 27, revistos na renovação visual de 2026-11). Paleta do Claude: papel e linho
+ * no claro, carvão quente no escuro, argila como acento. A tela do Prompt é a "folha": a coluna
+ * central onde título, metadados e texto se alinham; os painéis laterais ficam em linho.
+ */
 :root {
   color-scheme: light;
+  /* Papel: fundo da folha (painel do Prompt). */
   --fundo: #faf9f5;
-  --superficie: #f5f4ee;
+  /* Linho: painéis laterais (navegação, lista, Análise, Versões). */
+  --superficie: #f3f1ea;
+  /* Folha branca: modais, item selecionado, cartões, campos. */
   --elevada: #ffffff;
-  --realce: #efede4;
-  --borda: #e3e0d6;
-  --borda-forte: #cfcbbf;
+  --realce: #ebe8de;
+  --borda: #e4e1d6;
+  --borda-forte: #cfcabd;
   --texto: #1f1e1d;
-  --texto-suave: #6b6a65;
+  --texto-suave: #63625c;
+  /* Argila de marca: ícones, foco, cursor e realces. */
   --terracota: #c96442;
-  /* Terracota escurecida para texto e fundo de botão (contraste AA com branco e com o creme). */
+  /* Argila escurecida para texto e fundo de botão (contraste AA com branco e com o papel). */
   --destaque: #b05535;
   --destaque-hover: #9c4a2e;
   --sobre-destaque: #ffffff;
   --perigo: #b42318;
-  --perigo-fundo: #fdecea;
+  --perigo-fundo: #fbe9e5;
   --sucesso: #2f6f3e;
   --diff-rem-fundo: #fbe4df;
   --diff-rem-forte: #f3c1b6;
   --diff-add-fundo: #e2f0dd;
   --diff-add-forte: #bfdeb3;
-  --sombra: 0 8px 30px rgb(31 30 29 / 0.12);
-  --fonte-mono:
-    ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  /* Sombras tingidas de marrom, nunca cinza neutro; só o que está "levantado" as recebe. */
+  --sombra-cartao: 0 1px 2px rgb(74 52 33 / 0.07), 0 0 0 1px rgb(74 52 33 / 0.06);
+  --sombra:
+    0 24px 48px -16px rgb(74 52 33 / 0.24), 0 6px 14px -4px rgb(74 52 33 / 0.08),
+    0 0 0 1px rgb(74 52 33 / 0.06);
+  --fonte-mono: 'iA Writer Quattro', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  /* Largura da coluna de texto da folha (~72 caracteres no corpo do editor). */
+  --largura-folha: 46rem;
+  --margem-folha: 1rem;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --margem-folha: 2rem;
+  }
 }
 
 [data-tema='escuro'] {
@@ -36,9 +61,9 @@
   --superficie: #1f1e1d;
   --elevada: #30302e;
   --realce: #393834;
-  --borda: #3e3d39;
+  --borda: #3a3936;
   --borda-forte: #55534d;
-  --texto: #f5f4ee;
+  --texto: #f2f0e8;
   --texto-suave: #a6a39a;
   --terracota: #d97757;
   --destaque: #d97757;
@@ -51,7 +76,10 @@
   --diff-rem-forte: #6b3528;
   --diff-add-fundo: #233826;
   --diff-add-forte: #345a39;
-  --sombra: 0 8px 30px rgb(0 0 0 / 0.45);
+  --sombra-cartao: 0 1px 2px rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.05);
+  --sombra:
+    0 24px 48px -16px rgb(0 0 0 / 0.6), 0 6px 14px -4px rgb(0 0 0 / 0.3),
+    0 0 0 1px rgb(255 255 255 / 0.06);
 }
 
 @theme inline {
@@ -75,9 +103,11 @@
   --color-diff-add: var(--diff-add-fundo);
   --color-diff-add-forte: var(--diff-add-forte);
   --shadow-flutuante: var(--sombra);
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, ui-serif, serif;
+  --shadow-cartao: var(--sombra-cartao);
+  /* Interface: Instrument Sans. Títulos: Newsreader (tamanho óptico automático). Texto do
+     Prompt, diffs e código: iA Writer Quattro, fonte de escrita com espaçamento quase fixo. */
+  --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Newsreader Variable', 'Iowan Old Style', Georgia, ui-serif, serif;
   --font-mono: var(--fonte-mono);
 }
 
@@ -91,7 +121,18 @@
     background: var(--fundo);
     color: var(--texto);
     font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  .font-serif {
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
   }
   :focus-visible {
     outline: 2px solid var(--terracota);
@@ -100,31 +141,108 @@
   ::selection {
     background: color-mix(in srgb, var(--terracota) 30%, transparent);
   }
+  kbd {
+    font-family: var(--font-sans);
+  }
   dialog::backdrop {
-    background: rgb(20 20 19 / 0.45);
+    background: rgb(31 24 19 / 0.4);
+    backdrop-filter: blur(2px);
+  }
+
+  /* Abrir um modal: ele assenta no lugar (resposta à ação; nada se move sozinho). */
+  dialog[open] {
+    transition:
+      opacity 160ms ease-out,
+      transform 160ms ease-out;
+    @starting-style {
+      opacity: 0;
+      transform: translateY(6px) scale(0.985);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0ms !important;
+      animation-duration: 0ms !important;
+    }
   }
 }
 
 @layer components {
   .botao {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-borda bg-elevada px-3 whitespace-nowrap py-1.5 text-sm font-medium text-texto transition-colors hover:bg-realce disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex h-8 pointer-coarse:h-10 items-center justify-center gap-1.5 rounded-lg border border-borda bg-elevada px-3 text-sm font-medium whitespace-nowrap text-texto shadow-cartao transition-colors hover:border-borda-forte hover:bg-realce/50 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .botao-primario {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-destaque px-3 whitespace-nowrap py-1.5 text-sm font-semibold text-sobre-destaque transition-colors hover:bg-destaque-hover disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex h-8 pointer-coarse:h-10 items-center justify-center gap-1.5 rounded-lg bg-destaque px-3.5 text-sm font-semibold whitespace-nowrap text-sobre-destaque transition-colors hover:bg-destaque-hover disabled:cursor-not-allowed disabled:opacity-45;
   }
   .botao-perigo {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-perigo px-3 py-1.5 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 dark:text-superficie;
+    @apply inline-flex h-8 pointer-coarse:h-10 items-center justify-center gap-1.5 rounded-lg bg-perigo px-3.5 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 dark:text-superficie;
   }
   .botao-icone {
-    @apply inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-suave transition-colors hover:bg-realce hover:text-texto disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex size-8 shrink-0 pointer-coarse:size-10 items-center justify-center rounded-lg text-suave transition-colors hover:bg-realce hover:text-texto disabled:cursor-not-allowed disabled:opacity-40;
   }
   /* Selo/chip curto (status, Tag): uma linha, cortado com reticências se não couber. */
   .selo {
-    @apply inline-block max-w-full truncate rounded-full px-1.5 py-px align-middle whitespace-nowrap;
+    @apply inline-block max-w-full truncate rounded-full px-2 py-px align-middle whitespace-nowrap;
   }
   .campo {
-    @apply w-full rounded-lg border border-borda bg-elevada px-3 py-1.5 text-sm text-texto placeholder:text-suave focus:border-terracota focus:outline-none;
+    @apply w-full rounded-lg border border-borda bg-elevada px-3 py-1.5 text-sm text-texto transition-colors placeholder:text-suave hover:border-borda-forte focus:border-terracota focus:ring-3 focus:ring-terracota/15 focus:outline-none;
   }
+
+  /* Item de lista (Prompts, Versões, Paleta): 12px na horizontal, 10px na vertical. O
+     escolhido vira uma ficha branca levantada sobre o linho. */
+  .item {
+    @apply rounded-lg px-3 py-2.5 transition-colors hover:bg-realce/60;
+  }
+  /* Variante compacta, só para a navegação (filtros, Coleções, Tags, Diretrizes). */
+  .item-nav {
+    @apply px-3 py-2;
+  }
+  .item[aria-current='true'] {
+    @apply bg-elevada shadow-cartao hover:bg-elevada;
+  }
+
+  /* Rótulo de seção nos painéis: caixa de frase, discreto. */
+  .rotulo-secao {
+    @apply text-xs font-semibold text-suave;
+  }
+
+  /* Cabeçalho dos painéis laterais (lista, Análise, Versões): mesmo respiro em todos. */
+  .cabecalho-painel {
+    @apply flex items-center gap-2 border-b border-borda px-4 py-3;
+  }
+  .titulo-painel {
+    @apply font-serif text-[1.0625rem] font-semibold;
+  }
+
+  /* Cabeçalho da folha (Prompt, Diretrizes): mesma coluna e respiro de 16px em cima e embaixo. */
+  .cabecalho-folha {
+    @apply coluna-folha border-b border-borda py-4;
+  }
+
+  /* Cartão (Sugestão, avisos e blocos dentro dos painéis): respiro de 16px. */
+  .cartao {
+    @apply rounded-xl border border-borda bg-elevada p-4;
+  }
+
+  /* Corpo e rodapé de modal: 24px nas laterais. */
+  .corpo-modal {
+    @apply px-6 pt-1 pb-5;
+  }
+  .rodape-modal {
+    @apply flex flex-wrap justify-end gap-2 rounded-b-2xl border-t border-borda bg-superficie/60 px-6 py-4;
+  }
+
+  /* Faixa de aviso logo abaixo do cabeçalho da folha. */
+  .faixa {
+    @apply coluna-folha flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-borda py-2.5 text-sm;
+  }
+}
+
+/* Coluna da folha: o conteúdo fica numa coluna central de `--largura-folha`. */
+@utility coluna-folha {
+  padding-inline: max(var(--margem-folha), calc((100% - var(--largura-folha)) / 2));
 }
 
 /* Paleta (cmdk) */

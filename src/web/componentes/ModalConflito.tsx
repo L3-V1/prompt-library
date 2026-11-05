@@ -20,9 +20,9 @@ function Metadado({ rotulo, a, b }: { rotulo: string; a: string; b: string }) {
   const mudou = a !== b;
   return (
     <tr>
-      <th className="py-1.5 pr-4 text-left align-top font-medium text-suave">{rotulo}</th>
-      <td className={`rounded px-2 py-1.5 ${mudou ? 'bg-diff-rem' : ''}`}>{a || '(nenhuma)'}</td>
-      <td className={`rounded px-2 py-1.5 ${mudou ? 'bg-diff-add' : ''}`}>{b || '(nenhuma)'}</td>
+      <th className="py-2 pr-3 text-left align-top font-medium text-suave">{rotulo}</th>
+      <td className={`rounded px-3 py-2 ${mudou ? 'bg-diff-rem' : ''}`}>{a || '(nenhuma)'}</td>
+      <td className={`rounded px-3 py-2 ${mudou ? 'bg-diff-add' : ''}`}>{b || '(nenhuma)'}</td>
     </tr>
   );
 }
@@ -64,12 +64,12 @@ export function ModalConflito({
       titulo={titulo}
       className={verDiff ? 'w-[min(72rem,calc(100vw-2rem))]' : 'w-[min(34rem,calc(100vw-2rem))]'}
     >
-      <div className="flex min-h-0 flex-col gap-4 px-6 pt-1 pb-5 text-sm">
+      <div className="corpo-modal flex min-h-0 flex-col gap-4 text-sm">
         <p className="text-suave">{descricao}</p>
         {verDiff && conflito && (
           <>
             {textoIgual ? (
-              <div className="rounded-lg border border-borda bg-superficie p-4">
+              <div className="cartao bg-superficie">
                 <p className="mb-3">
                   O texto é igual nos dois lados; a diferença está no título ou nas Tags.
                 </p>
@@ -78,8 +78,8 @@ export function ModalConflito({
                     <thead>
                       <tr className="text-xs text-suave">
                         <th />
-                        <th className="px-2 pb-1 text-left font-medium">Suas alterações</th>
-                        <th className="px-2 pb-1 text-left font-medium">No disco</th>
+                        <th className="px-3 pb-1 text-left font-medium">Suas alterações</th>
+                        <th className="px-3 pb-1 text-left font-medium">No disco</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -105,7 +105,7 @@ export function ModalConflito({
           </>
         )}
       </div>
-      <div className="flex flex-wrap justify-end gap-2 border-t border-borda px-6 py-4">
+      <div className="rodape-modal">
         {!verDiff && (
           <button type="button" className="botao mr-auto" onClick={() => setVerDiff(true)}>
             Ver diferenças

@@ -201,7 +201,9 @@ export function PainelAnalise({
     const invalida = erroLeitura instanceof ErroApi && erroLeitura.codigo === 'analise_invalida';
     conteudo = (
       <div className="flex flex-col gap-3 text-sm">
-        <p className="rounded-lg bg-perigo-fundo p-3 text-perigo">{mensagemDeErro(erroLeitura)}</p>
+        <p className="cartao border-transparent bg-perigo-fundo text-perigo">
+          {mensagemDeErro(erroLeitura)}
+        </p>
         {invalida && (
           <button
             type="button"
@@ -233,10 +235,7 @@ export function PainelAnalise({
     conteudo = (
       <div className="flex flex-col gap-4">
         {gerando && (
-          <div
-            role="status"
-            className="flex items-center gap-3 rounded-xl border border-borda bg-realce/70 px-4 py-3 text-sm"
-          >
+          <div role="status" className="cartao flex items-center gap-3 text-sm">
             <span
               className="size-4 shrink-0 animate-spin rounded-full border-2 border-terracota border-t-transparent"
               aria-hidden="true"
@@ -259,7 +258,10 @@ export function PainelAnalise({
         )}
 
         {analise.erro && !gerando && (
-          <div role="alert" className="flex flex-col gap-3 rounded-xl bg-perigo-fundo p-4 text-sm">
+          <div
+            role="alert"
+            className="cartao flex flex-col gap-3 border-transparent bg-perigo-fundo text-sm"
+          >
             <p className="flex gap-2 text-perigo">
               <Icone nome="alerta" className="mt-0.5 size-4 shrink-0" />
               <span className="min-w-0 break-words">{analise.erro}</span>
@@ -277,7 +279,7 @@ export function PainelAnalise({
         )}
 
         {!gerando && !analise.erro && analise.sugestoes.length === 0 && (
-          <p className="rounded-xl border border-borda bg-fundo p-4 text-sm text-suave">
+          <p className="cartao text-sm text-suave">
             O Claude não propôs Sugestões. Edite o Rascunho, regenere com outra Instrução ou
             conclua.
           </p>
@@ -332,7 +334,7 @@ export function PainelAnalise({
         </ul>
 
         {regenerandoTudo && !gerando && (
-          <div className="rounded-xl border border-borda bg-fundo p-4">
+          <div className="cartao">
             <h3 className="mb-3 text-sm font-semibold">Regenerar tudo</h3>
             <p className="mb-3 text-xs text-suave">
               As Sugestões pendentes e desatualizadas são trocadas por novas. As aceitas e
@@ -353,9 +355,9 @@ export function PainelAnalise({
 
   return (
     <>
-      <div className="flex items-center gap-2 border-b border-borda px-4 py-3">
+      <div className="cabecalho-painel">
         <Icone nome="faisca" className="size-4 text-terracota" />
-        <h2 className="font-serif text-base font-semibold">Análise</h2>
+        <h2 className="titulo-painel">Análise</h2>
         {/* Com Análise, em telas largas o painel fica sempre aberto; só a gaveta fecha. */}
         <button
           type="button"

@@ -55,7 +55,7 @@ export function Toaster() {
         <div
           key={a.id}
           role={a.tipo === 'erro' ? 'alert' : 'status'}
-          className="pointer-events-auto flex items-start gap-3 rounded-xl border border-borda bg-elevada px-4 py-3 text-sm shadow-flutuante"
+          className="pointer-events-auto flex items-start gap-3 rounded-xl bg-elevada px-4 py-3 text-sm shadow-flutuante"
         >
           <Icone nome={ICONES[a.tipo]} className={`mt-0.5 size-4 shrink-0 ${CORES[a.tipo]}`} />
           <p className="min-w-0 flex-1 break-words">{a.texto}</p>
