@@ -4,6 +4,7 @@ import { useEventos } from './dados/eventos';
 import { ConfirmarSaida } from './componentes/Confirmacao';
 import { Diretrizes } from './componentes/Diretrizes';
 import { EstadoVazio } from './componentes/EstadoVazio';
+import { FormularioVariaveis } from './componentes/FormularioVariaveis';
 import { Layout } from './componentes/Layout';
 import { ListaPrompts } from './componentes/ListaPrompts';
 import { Navegacao } from './componentes/Navegacao';
@@ -78,6 +79,7 @@ export function App() {
         onFecharGaveta={fecharGaveta}
       />
       <Paleta aberta={paleta} onFechar={() => setPaleta(false)} />
+      <FormularioVariaveis />
       <NovoPrompt
         aberto={novo !== null}
         colecaoInicial={novo?.colecao ?? null}
