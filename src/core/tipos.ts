@@ -112,6 +112,12 @@ export interface SugestaoGerada {
 
 export type ModeloClaude = 'opus' | 'sonnet' | 'haiku';
 
+/** O que o Claude está fazendo durante a geração, a partir de um `tool_use` (decisão 128). */
+export type AtividadeClaude =
+  | { tipo: 'ler'; caminho: string }
+  | { tipo: 'buscar'; termo: string }
+  | { tipo: 'listar'; padrao: string };
+
 export interface ExecucaoAnalise {
   tipo: 'analise' | 'sugestao';
   sugestaoId?: string;

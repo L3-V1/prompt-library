@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Claude falso: responde um envelope de sucesso.
+// Claude falso: responde um stream-json com o result de sucesso.
+process.stdout.write(JSON.stringify({ type: 'system', subtype: 'init' }) + '\n');
 process.stdout.write(
   JSON.stringify({
     type: 'result',
@@ -14,5 +15,5 @@ process.stdout.write(
     total_cost_usd: 0.0123,
     duration_ms: 4567,
     modelUsage: { 'claude-haiku-x': { costUSD: 0.001 }, 'claude-sonnet-x': { costUSD: 0.0113 } },
-  }),
+  }) + '\n',
 );

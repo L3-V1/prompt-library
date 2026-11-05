@@ -1,11 +1,16 @@
-import type { Analise } from '../core/index.js';
+import type { Analise, AtividadeClaude } from '../core/index.js';
 import type { Mudancas } from './indice.js';
 
 export type Evento =
   | { tipo: 'acervo'; dados: Mudancas }
   | { tipo: 'diretrizes'; dados: { hash: string | null } }
   /** A Análise do Prompt mudou; `null` = concluída ou descartada. */
-  | { tipo: 'analise'; dados: { promptId: string; analise: Analise | null } };
+  | { tipo: 'analise'; dados: { promptId: string; analise: Analise | null } }
+  /**
+   * A ferramenta que o Claude está usando na geração (decisão 129). Efêmera, não é gravada;
+   * `null` ao começar.
+   */
+  | { tipo: 'atividade'; dados: { promptId: string; atividade: AtividadeClaude | null } };
 
 type Ouvinte = (evento: Evento) => void;
 

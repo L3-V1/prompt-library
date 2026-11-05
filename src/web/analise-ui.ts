@@ -1,6 +1,6 @@
 import { diffWords } from 'diff';
 
-import type { StatusSugestao } from '../core/index';
+import type { AtividadeClaude, StatusSugestao } from '../core/index';
 
 /** Pedaço do mini-diff de uma Sugestão. */
 export interface ParteDiff {
@@ -68,6 +68,18 @@ export function formatarCusto(usd: number): string {
 
 export function formatarDuracao(ms: number): string {
   return `${segundos.format(ms / 1000)} s`;
+}
+
+/** A linha de progresso da geração: `Lendo Code review/x.md`, `Buscando "termo"`. */
+export function textoAtividade(atividade: AtividadeClaude): string {
+  switch (atividade.tipo) {
+    case 'ler':
+      return `Lendo ${atividade.caminho}`;
+    case 'buscar':
+      return `Buscando "${atividade.termo}"`;
+    case 'listar':
+      return 'Listando arquivos';
+  }
 }
 
 /** Tempo desde `inicio` em `m:ss`. */

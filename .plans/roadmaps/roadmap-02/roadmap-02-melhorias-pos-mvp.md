@@ -1,10 +1,11 @@
 ---
 titulo: "Roadmap: melhorias pós-MVP da Biblioteca de Prompts"
 data: 2026-11-05
-status: aprovado
+status: implementado
 tipo: roadmap
 numero: "02"
 triagem: ok
+encerrado_em: 2026-11-05
 ---
 
 # Roadmap: melhorias pós-MVP da Biblioteca de Prompts

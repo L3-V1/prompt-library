@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { miniDiff, resumoStatus, tempoDecorrido, textoResumo } from './analise-ui';
+import { miniDiff, resumoStatus, tempoDecorrido, textoAtividade, textoResumo } from './analise-ui';
 
 describe('miniDiff', () => {
   it('marca as palavras removidas e adicionadas', () => {
@@ -39,5 +39,15 @@ describe('tempoDecorrido', () => {
     const inicio = '2026-11-04T10:00:00.000Z';
     expect(tempoDecorrido(inicio, Date.parse(inicio) + 75_400)).toBe('1:15');
     expect(tempoDecorrido(inicio, Date.parse(inicio) - 5)).toBe('0:00');
+  });
+});
+
+describe('textoAtividade', () => {
+  it('ler, buscar e listar', () => {
+    expect(textoAtividade({ tipo: 'ler', caminho: 'Code review/x.md' })).toBe(
+      'Lendo Code review/x.md',
+    );
+    expect(textoAtividade({ tipo: 'buscar', termo: 'revis' })).toBe('Buscando "revis"');
+    expect(textoAtividade({ tipo: 'listar', padrao: '**/*.md' })).toBe('Listando arquivos');
   });
 });
